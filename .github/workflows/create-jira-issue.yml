@@ -17,8 +17,6 @@ jobs:
 
       - name: Checkout dev code
         uses: actions/checkout@v4
-        with:
-          ref: dev
 
       - name: Issue Parser
         uses: stefanbuck/github-issue-praser@v3
