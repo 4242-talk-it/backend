@@ -65,12 +65,20 @@ jobs:
           ref: dev
 
       - name: Create branch with Ticket number
+        env:
+          GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
         run: |
+          git config --global user.email "actions@github.com"
+          git config --global user.name "github-actions[bot]"
+          git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}
+          
           ISSUE_NUMBER="${{ steps.create.outputs.issue }}"
           ISSUE_TITLE="${{ steps.issue-parser.outputs.issueparser_branch}}"
           BRANCH_NAME="${ISSUE_NUMBER}-$(echo ${ISSUE_TITLE} | sed 's/ /-/g')"
+          
           git checkout -b "${BRANCH_NAME}"
           git push origin "${BRANCH_NAME}"
+
 
       - name: Update issue title
         uses: actions-cool/issues-helper@v3
