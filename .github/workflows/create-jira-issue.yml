@@ -73,8 +73,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
         run: |
-          git config --global user.email "actions@github.com"
-          git config --global user.name "github-actions[bot]"
+          git config --global user.email "${{ github.event.issue.user.login }}@users.noreply.github.com"
+          git config --global user.name "${{ github.event.issue.user.login }}"
           git remote set-url origin https://x-access-token:${{ secrets.PERSONAL_ACCESS_TOKEN }}@github.com/${{ github.repository }}
           
           ISSUE_NUMBER="${{ steps.create.outputs.issue }}"
@@ -90,6 +90,13 @@ jobs:
           actions: 'update-issue'
           token: ${{ secrets.GITHUB_TOKEN }}
           title: '[${{ steps.create.outputs.issue }}] ${{ github.event.issue.title }}'
+
+      - name: Assign issue to creator
+        uses: actions-cool/issues-helper@v3
+        with:
+          actions: 'add-assignees'
+          token: ${{ secrets.GITHUB_TOKEN }}
+          assignees: ${{ github.event.issue.user.login }}
 
       - name: Add comment with Jira issue link
         uses: actions-cool/issues-helper@v3
