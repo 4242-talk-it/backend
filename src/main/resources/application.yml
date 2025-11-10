@@ -1,0 +1,12 @@
+server:
+  port: 8080  # 원하는 포트 번호 (기본 8080)
+
+spring:
+  application:
+    name: my-app  # 앱 이름 (선택)
+  main:
+    allow-bean-definition-overriding: true
+
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
