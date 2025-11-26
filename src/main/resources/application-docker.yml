@@ -1,0 +1,5 @@
+spring:
+  datasource:
+    url: jdbc:mysql://${MYSQL_HOST}:${MYSQL_INTERNAL_PORT}/${MYSQL_DATABASE}?serverTimezone=Asia/Seoul&useUnicode=true&characterEncoding=UTF-8
+    username: ${MYSQL_USER}
+    password: ${MYSQL_PASSWORD}
