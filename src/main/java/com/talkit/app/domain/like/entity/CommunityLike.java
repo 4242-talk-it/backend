@@ -1,9 +1,8 @@
 package com.talkit.app.domain.like.entity;
 
-import com.talkit.app.domain.community.entity.Comment;
 import com.talkit.app.domain.community.entity.Community;
 import com.talkit.app.domain.user.entity.User;
-import com.talkit.app.global.BaseEntity;
+import com.talkit.app.global.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;

@@ -4,7 +4,7 @@ import com.talkit.app.domain.community.entity.Comment;
 import com.talkit.app.domain.community.entity.Community;
 import com.talkit.app.domain.like.entity.CommentLike;
 import com.talkit.app.domain.like.entity.CommunityLike;
-import com.talkit.app.global.BaseEntity;
+import com.talkit.app.global.entity.BaseEntity;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -27,6 +27,8 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 @AllArgsConstructor
 public class User extends BaseEntity {
+
+    public static final Long ANONYMOUS_USER_ID = -1L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
