@@ -1,6 +1,7 @@
 package com.talkit.app.domain.community.controller;
 
 import com.talkit.app.domain.community.dto.CommunityRequestDto;
+import com.talkit.app.domain.community.dto.CommunityResponseDto;
 import com.talkit.app.domain.community.service.CommunityService;
 import com.talkit.app.global.auth.AuthenticatedUser;
 import com.talkit.app.global.auth.AuthenticationHolder;
@@ -24,12 +25,12 @@ public class CommunityController {
 
     @Operation(summary = "게시물 작성")
     @AuthenticatedUser
-    @PostMapping
-    public ResponseDto<CommunityRequestDto> create(
+    @PostMapping("/create")
+    public ResponseDto<CommunityResponseDto> create(
         @ModelAttribute @Valid CommunityRequestDto requestDto
     ) {
         Long userId = AuthenticationHolder.getCurrentUserId();
-        return ResponseDto.of(communityService.createCommunity(requestDto, userId), "게시물이 성공적으로 생성되었습니다.");
+        return ResponseDto.of(communityService.createCommunity(requestDto), "게시물이 성공적으로 생성되었습니다.");
     }
 
 }

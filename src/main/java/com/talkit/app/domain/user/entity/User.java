@@ -41,10 +41,7 @@ public class User extends BaseEntity {
     private String password;
 
     @Column(name = "nickname", nullable = false)
-    private String nickName;
-
-    @Column(name = "password", nullable = false)
-    private String password;
+    private String nickname;
 
     @Column(name = "birth_year", nullable = false)
     private String birthYear;
@@ -59,7 +56,7 @@ public class User extends BaseEntity {
     private String ssoProvider;
 
     // ===== 게시글 =====
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "user")
     private List<Community> communityList = new ArrayList<>();
 
     // ===== 게시글 좋아요 =====
