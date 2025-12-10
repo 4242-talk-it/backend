@@ -2,7 +2,9 @@ package com.talkit.app.domain.user.entity;
 
 import com.talkit.app.domain.community.entity.Comment;
 import com.talkit.app.domain.community.entity.Community;
-import com.talkit.app.global.BaseEntity;
+import com.talkit.app.domain.like.entity.CommentLike;
+import com.talkit.app.domain.like.entity.CommunityLike;
+import com.talkit.app.global.entity.BaseEntity;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -14,19 +16,19 @@ import jakarta.persistence.Table;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
-
+@Entity
 @Table(name = "user")
-@SuperBuilder
 @Getter
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-@Entity
 public class User extends BaseEntity {
+
+    public static final Long ANONYMOUS_USER_ID = -1L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -39,7 +41,7 @@ public class User extends BaseEntity {
     private String password;
 
     @Column(name = "nickname", nullable = false)
-    private String nickName;
+    private String nickname;
 
     @Column(name = "birth_year", nullable = false)
     private String birthYear;
@@ -47,21 +49,25 @@ public class User extends BaseEntity {
     @Column(name = "gender")
     private String gender;
 
-    //oauth에서 제공된 user 식별 아이디
     @Column(name = "provider_id")
     private String providerId;
 
-    //사용된 oauth 이름: kakao, google, saisai
     @Column(name = "sso_provider", length = 50)
     private String ssoProvider;
 
+    // ===== 게시글 =====
+    @OneToMany(mappedBy = "user")
+    private List<Community> communityList = new ArrayList<>();
+
+    // ===== 게시글 좋아요 =====
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    List<Comment> commentList = new ArrayList<>();
+    private List<CommunityLike> communityLikeList = new ArrayList<>();
 
+    // ===== 댓글 =====
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    List<Community> communityList = new ArrayList<>();
+    private List<Comment> commentList = new ArrayList<>();
 
-
-
-
+    // ===== 댓글 좋아요 =====
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<CommentLike> commentLikeList = new ArrayList<>();
 }

@@ -1,4 +1,4 @@
-package com.talkit.app.global;
+package com.talkit.app.global.entity;
 
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.MappedSuperclass;

@@ -1,9 +1,8 @@
 package com.talkit.app.domain.like.entity;
 
 import com.talkit.app.domain.community.entity.Comment;
-import com.talkit.app.domain.community.entity.Community;
 import com.talkit.app.domain.user.entity.User;
-import com.talkit.app.global.BaseEntity;
+import com.talkit.app.global.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -13,19 +12,25 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 @Entity
-@Table(name = "likes")
+@Table(
+    name = "comment_like",
+    uniqueConstraints = {
+        @UniqueConstraint(columnNames = {"user_id", "comment_id"})
+    }
+)
 @Getter
 @SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Like extends BaseEntity {
+public class CommentLike extends BaseEntity {
+
 
     @Id
     @Column(name = "id", nullable = false)
@@ -36,11 +41,8 @@ public class Like extends BaseEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "community_id", nullable = false)
-    private Community community;
-
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "comment_id", nullable = false)
     private Comment comment;
+
 }
