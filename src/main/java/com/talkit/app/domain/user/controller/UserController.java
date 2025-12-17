@@ -6,6 +6,8 @@ import com.talkit.app.domain.user.dto.UserSignupRequest;
 import com.talkit.app.domain.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -27,22 +29,37 @@ public class UserController {
         return ResponseEntity.ok().build();
     }
 
-    @Operation(summary = "사이트 자체 로그인")
+    @Operation(summary = "로그인 (Spring Security 처리)", description = "email, password를 넣으면 Spring Security가 자동 인증합니다.")
     @PostMapping("/login")
-    @ResponseBody
-    public ResponseEntity<UserLoginResponse> login(@RequestBody UserLoginRequest request){
-        boolean result = userService.login(
-                request.getEmail(),
-                request.getPassword()
-        );
+    public void login(@RequestBody UserLoginRequest request) {
+        throw new IllegalStateException("This method should not be called. Spring Security handles authentication.");
+    }
+    // @Operation(summary = "사이트 자체 로그인")
+//    @PostMapping("/login")
+//    @ResponseBody
+//    public ResponseEntity<UserLoginResponse> login(@RequestBody UserLoginRequest request,
+//                                                   HttpServletRequest httpRequest){
+//        boolean result = userService.login(
+//                request.getEmail(),
+//                request.getPassword()
+//        );
+//
+//        if(!result) { //false인 경우(이메일, 비밀번호 불일치)
+//            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+//                    .body(new UserLoginResponse("fail"));
+//        }
+//
+//        HttpSession session = httpRequest.getSession(true); // 세션 생성
+//        session.setAttribute("LOGIN_USER", request.getEmail()); // 또는 userId
+//
+//        return ResponseEntity.ok(
+//                new UserLoginResponse("success")
+//        );
+//    }
 
-        if(!result) { //false인 경우(이메일, 비밀번호 불일치)
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(new UserLoginResponse("fail"));
-        }
-
-        return ResponseEntity.ok(
-                new UserLoginResponse("success")
-        );
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(HttpServletRequest request){
+        request.getSession(false).invalidate();
+        return ResponseEntity.ok().build();
     }
 }
