@@ -5,6 +5,10 @@ server:
     max-swallow-size: -1
   forward-headers-strategy: framework
 
+logging:
+  level:
+    org.springframework.security: DEBUG
+
 spring:
   profiles:
     active: ${SPRING_PROFILES_ACTIVE}
@@ -13,7 +17,7 @@ spring:
   jpa:
     open-in-view: false
     hibernate:
-      ddl-auto: update
+      ddl-auto: create
     properties:
       hibernate:
         default_batch_fetch_size: 100

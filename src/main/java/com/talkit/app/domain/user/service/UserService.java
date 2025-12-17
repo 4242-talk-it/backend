@@ -29,7 +29,7 @@ public class UserService {
         // 3️⃣ User 생성
         User user = User.builder()
                 .email(request.getEmail())
-                .password(encodedPassword)
+                .password(passwordEncoder.encode(request.getPassword()))
                 .nickname(request.getNickname())
                 .birthYear(request.getBirthYear())
                 .gender(request.getGender())
@@ -39,21 +39,23 @@ public class UserService {
         userRepository.save(user);
     }
 
-    public boolean login(String email, String password) { //입력받은 email, password(평문)
-        Optional<User> optionalUser = userRepository.findByEmail(email);
 
-
-        if (optionalUser.isEmpty()) {
-            //입력한 이메일 없을 시 -> 로그인실패
-            return false;
-        }
-
-        User user=optionalUser.get();
-
-        if(!passwordEncoder.matches(password, user.getPassword())){
-            //비밀번호 불일치
-            return false;
-        }
-        return true;
-    }
+    //=============로그인=============
+//    public boolean login(String email, String password) { //입력받은 email, password(평문)
+//        Optional<User> optionalUser = userRepository.findByEmail(email);
+//
+//
+//        if (optionalUser.isEmpty()) {
+//            //입력한 이메일 없을 시 -> 로그인실패
+//            return false;
+//        }
+//
+//        User user=optionalUser.get();
+//
+//        if(!passwordEncoder.matches(password, user.getPassword())){
+//            //비밀번호 불일치
+//            return false;
+//        }
+//        return true;
+//    }
 }
