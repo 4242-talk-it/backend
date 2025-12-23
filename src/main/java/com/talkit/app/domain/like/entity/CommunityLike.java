@@ -34,13 +34,13 @@ public class CommunityLike extends BaseEntity {
     @Id
     @Column(name = "id", nullable = false)
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long id; //글 좋아요 식별키
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    private User user; //사용자 식별키
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "community_id", nullable = false)
-    private Community community;
+    private Community community; //글 식별키
 }

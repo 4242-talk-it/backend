@@ -32,20 +32,20 @@ public class Comment extends BaseEntity {
     @Id
     @Column(name = "id", nullable = false)
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long id; //댓글 식별키
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "community_id", nullable = false)
-    private Community community;
+    private Community community; //글 식별키
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    private User user; //사용자 식별키
 
     @Column(name = "content", nullable = false)
-    private String content;
+    private String content; //댓글 내용
 
     @OneToMany(mappedBy = "comment", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<CommentLike> commentLikeList = new ArrayList<>();
+    private List<CommentLike> commentLikeList = new ArrayList<>(); //댓글 좋아요
 }
 
