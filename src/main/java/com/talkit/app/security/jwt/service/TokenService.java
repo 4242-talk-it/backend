@@ -88,6 +88,14 @@ public class TokenService {
         response.addHeader("Set-Cookie", cookie.toString());
     }
 
+    //로그인용 토큰 생성 메서드
+    public String createAccessToken(User user) {
+        return jwtTokenizer.createAccessToken(
+            user.getId(),
+            user.getEmail(),
+            user.getNickname()
+        );
+    }
 
     //임시 토큰 용
     public void createTokenByUserRole() {
