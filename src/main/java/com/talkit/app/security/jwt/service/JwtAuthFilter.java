@@ -16,15 +16,19 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
+import java.util.List;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.web.filter.OncePerRequestFilter;
 
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class JwtAuthFilter {
+public class JwtAuthFilter extends OncePerRequestFilter {
 
     private final JwtTokenizer jwtTokenizer;
     private final UserRepository userRepository;
 
+    @Override
     protected void doFilterInternal(HttpServletRequest request,
         HttpServletResponse response,
         FilterChain filterChain)
@@ -37,8 +41,9 @@ public class JwtAuthFilter {
             User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessLogicException(ExceptionType.NOT_FOUND_USER));
 
+            List<SimpleGrantedAuthority> authorities =List.of(new SimpleGrantedAuthority("ROLE_USER"));
             UsernamePasswordAuthenticationToken authentication =
-                new UsernamePasswordAuthenticationToken(user, null, null);
+                new UsernamePasswordAuthenticationToken(user, null, authorities);
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
             log.info("JWT 인증 성공 - userId={}", userId);
