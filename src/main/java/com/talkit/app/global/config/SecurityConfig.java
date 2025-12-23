@@ -1,6 +1,7 @@
 package com.talkit.app.global.config;
 
 import com.talkit.app.domain.user.service.UserDetailsImplService;
+import com.talkit.app.security.jwt.service.JwtAuthFilter;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -13,6 +14,7 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @RequiredArgsConstructor
 @Configuration
@@ -20,6 +22,7 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfig {
 
     private final UserDetailsImplService userDetailsImplService;
+    private final JwtAuthFilter jwtAuthFilter;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -89,12 +92,14 @@ public class SecurityConfig {
                         // 특정 권한이 필요한 경로
                         .requestMatchers(
                                 "/api/community/{id}/comment/**",
-                                "/api/community/{id}/like/**"
+                                "/api/community/{id}/like/**",
+                                "/api/token/user"
                         ).hasAuthority("ROLE_USER")
 
                         // 그 외 모든 요청은 인증 필요
                         .anyRequest().authenticated()
                 )
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
 }
