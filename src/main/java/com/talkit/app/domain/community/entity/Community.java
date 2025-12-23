@@ -35,7 +35,7 @@ public class Community extends BaseEntity {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = true)
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
     @Column(name = "title", nullable = false)
@@ -53,9 +53,9 @@ public class Community extends BaseEntity {
     @OneToMany(mappedBy = "community", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CommunityLike> communityLikeList = new ArrayList<>();
 
-    public static Community of(String title, String content, String category) {
+    public static Community of(User user, String title, String content, String category) {
         return Community.builder()
-            //.user(user)
+            .user(user)
             .title(title)
             .content(content)
             .category(category)

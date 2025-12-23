@@ -11,10 +11,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RequiredArgsConstructor
-@Tag(name = "회원가입 및 로그인", description = "회원가입 및 로그인 관련 API")
+@Tag(name = "회원가입 및 로그인/로그아웃", description = "회원가입 및 로그인/로그아웃 관련 API")
 @RestController
-@RequestMapping("/api/users")
-public class UserController {
+@RequestMapping("/api/user")
+public class UserAuthController {
 
     private final UserService userService;
 

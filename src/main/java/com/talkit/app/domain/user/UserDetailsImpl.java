@@ -1,4 +1,4 @@
-package com.talkit.app.global.auth;
+package com.talkit.app.domain.user;
 
 import java.util.Collection;
 import lombok.Builder;

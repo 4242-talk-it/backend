@@ -3,6 +3,8 @@ package com.talkit.app.domain.user.service;
 import com.talkit.app.domain.user.dto.UserSignupRequest;
 import com.talkit.app.domain.user.entity.User;
 import com.talkit.app.domain.user.repository.UserRepository;
+import com.talkit.app.global.exception.BusinessLogicException;
+import com.talkit.app.global.exception.ExceptionType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -31,5 +33,11 @@ public class UserService {
                 .build();
 
         userRepository.save(user);
+    }
+
+    public User findUserById(Long id) {
+        return userRepository.findById(id)
+            .orElseThrow(() -> new BusinessLogicException(ExceptionType.NOT_FOUND_USER));
+
     }
 }

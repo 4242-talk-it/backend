@@ -1,6 +1,6 @@
 package com.talkit.app.global.config;
 
-import com.talkit.app.global.auth.UserDetailsImplService;
+import com.talkit.app.domain.user.service.UserDetailsImplService;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;

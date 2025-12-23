@@ -18,12 +18,13 @@ public record CommunityResponseDto(
     LocalDateTime createdAt,
     LocalDateTime updatedAt
 ) {
-    public static CommunityResponseDto of(Community community) {
+    public static CommunityResponseDto of(Community community, Long userId) {
         return CommunityResponseDto.builder()
             .id(community.getId())
             .title(community.getTitle())
             .content(community.getContent())
-            //.nickname(community.getUser().getNickname())
+            .nickname(community.getUser().getNickname())
+            .isOwnedByUser(community.getUser().getId().equals(userId))
             .createdAt(community.getCreatedAt())
             .updatedAt(community.getUpdatedAt())
             .build();
