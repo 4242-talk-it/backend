@@ -30,7 +30,7 @@ public class CommunityController {
         @ModelAttribute @Valid CommunityRequestDto requestDto
     ) {
         Long userId = AuthenticationHolder.getCurrentUserId();
-        return ResponseDto.of(communityService.createCommunity(requestDto), "게시물이 성공적으로 생성되었습니다.");
+        return ResponseDto.of(communityService.createCommunity(requestDto, userId), "게시물이 성공적으로 생성되었습니다.");
     }
 
 }

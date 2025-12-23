@@ -1,7 +1,8 @@
-package com.talkit.app.global.auth;
+package com.talkit.app.domain.user.service;
 
 import com.talkit.app.domain.user.entity.User;
 import com.talkit.app.domain.user.repository.UserRepository;
+import com.talkit.app.domain.user.UserDetailsImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -24,7 +25,7 @@ public class UserDetailsImplService implements UserDetailsService {
         return UserDetailsImpl.builder()
                 .id(user.getId())
                 .email(user.getEmail())
-                .password(user.getPassword())  // 🔥 중요!
+                .password(user.getPassword())
                 .authorities(List.of(() -> "ROLE_USER"))
                 .build();
     }

@@ -1,6 +1,6 @@
 package com.talkit.app.global.config;
 
-import com.talkit.app.global.auth.UserDetailsImplService;
+import com.talkit.app.domain.user.service.UserDetailsImplService;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -40,7 +40,11 @@ public class SecurityConfig {
                 // HTTP Basic 인증 비활성화
                 .httpBasic(AbstractHttpConfigurer::disable)
 
+                .formLogin(AbstractHttpConfigurer::disable)
+                .logout(AbstractHttpConfigurer::disable)
+
                 // Form Login 설정 (Postman x-www-form-urlencoded 대응)
+/*
                 .formLogin(form -> form
                         .loginProcessingUrl("/api/users/login") // 로그인 처리 경로
                         .usernameParameter("email")           // 아이디 파라미터명
@@ -68,7 +72,7 @@ public class SecurityConfig {
                             res.setStatus(HttpServletResponse.SC_OK);
                             res.getWriter().write("Logout Success");
                         })
-                )
+                )*/
 
                 // 접근 권한 설정
                 .authorizeHttpRequests(auth -> auth
