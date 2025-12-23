@@ -1,13 +1,16 @@
 package com.talkit.app.domain.user.service;
 
+import com.talkit.app.domain.user.dto.UserLoginRequest;
 import com.talkit.app.domain.user.dto.UserSignupRequest;
 import com.talkit.app.domain.user.entity.User;
 import com.talkit.app.domain.user.repository.UserRepository;
+import com.talkit.app.global.exception.BusinessLogicException;
+import com.talkit.app.global.exception.ExceptionType;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -18,44 +21,40 @@ public class UserService {
 
     public void signup(UserSignupRequest request) {
 
-        // 1️⃣ 이메일 중복 체크
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
         }
 
-        // 2️⃣ 비밀번호 암호화
         String encodedPassword = passwordEncoder.encode(request.getPassword());
 
-        // 3️⃣ User 생성
         User user = User.builder()
                 .email(request.getEmail())
-                .password(passwordEncoder.encode(request.getPassword()))
+                .password(encodedPassword)
                 .nickname(request.getNickname())
                 .birthYear(request.getBirthYear())
                 .gender(request.getGender())
                 .build();
 
-        // 4️⃣ 저장
         userRepository.save(user);
     }
 
+    public User login(UserLoginRequest request) {
 
-    //=============로그인=============
-//    public boolean login(String email, String password) { //입력받은 email, password(평문)
-//        Optional<User> optionalUser = userRepository.findByEmail(email);
-//
-//
-//        if (optionalUser.isEmpty()) {
-//            //입력한 이메일 없을 시 -> 로그인실패
-//            return false;
-//        }
-//
-//        User user=optionalUser.get();
-//
-//        if(!passwordEncoder.matches(password, user.getPassword())){
-//            //비밀번호 불일치
-//            return false;
-//        }
-//        return true;
-//    }
+        User user = userRepository.findByEmail(request.getEmail())
+            .orElseThrow(() -> new BusinessLogicException(ExceptionType.NOT_FOUND_USER));
+
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            throw new BusinessLogicException(ExceptionType.NOT_FOUND_USER);
+        }
+
+        // Access Token 생성
+        return user;
+    }
+
+    public User findUserById(Long id) {
+        return userRepository.findById(id)
+            .orElseThrow(() -> new BusinessLogicException(ExceptionType.NOT_FOUND_USER));
+
+    }
+
 }
