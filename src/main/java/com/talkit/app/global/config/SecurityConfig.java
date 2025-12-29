@@ -57,6 +57,11 @@ public class SecurityConfig {
 
                 // 접근 권한 설정
                 .authorizeHttpRequests(auth -> auth
+                        // 특정 권한이 필요한 경로
+                        .requestMatchers("/api/token/user").hasRole("USER")
+                        .requestMatchers("/api/community/{id}/comment/**","/api/community/{id}/like/**").hasRole("USER")
+
+
                         // 화이트리스트: 인증 없이 접근 가능
                         .requestMatchers(
                                 "/api/users/signup",
@@ -65,15 +70,11 @@ public class SecurityConfig {
                                 "/api/stats/**",
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
-                                "/swagger-ui.html"
+                                "/swagger-ui.html",
+                                "/error"
                         ).permitAll()
 
-                        // 특정 권한이 필요한 경로
-                        .requestMatchers(
-                                "/api/community/{id}/comment/**",
-                                "/api/community/{id}/like/**",
-                                "/api/token/user"
-                        ).hasAuthority("ROLE_USER")
+
 
                         // 그 외 모든 요청은 인증 필요
                         .anyRequest().authenticated()
