@@ -15,6 +15,11 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.List;
 
 @RequiredArgsConstructor
 @Configuration
@@ -37,6 +42,8 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+
                 // CSRF 비활성화 (Postman 테스트 및 API 서버용)
                 .csrf(AbstractHttpConfigurer::disable)
 
@@ -46,36 +53,7 @@ public class SecurityConfig {
                 .formLogin(AbstractHttpConfigurer::disable)
                 .logout(AbstractHttpConfigurer::disable)
 
-                // Form Login 설정 (Postman x-www-form-urlencoded 대응)
-/*
-                .formLogin(form -> form
-                        .loginProcessingUrl("/api/users/login") // 로그인 처리 경로
-                        .usernameParameter("email")           // 아이디 파라미터명
-                        .passwordParameter("password")        // 비밀번호 파라미터명
-                        .successHandler((req, res, auth) -> {
-                            // 성공 시 JSON 응답 반환
-                            res.setStatus(HttpServletResponse.SC_OK);
-                            res.setContentType("application/json;charset=UTF-8");
-                            res.getWriter().write("{\"message\": \"로그인 성공\", \"user\": \"" + auth.getName() + "\"}");
-                        })
-                        .failureHandler((req, res, ex) -> {
-                            // 실패 시 401과 에러 메시지 반환
-                            res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                            res.setContentType("application/json;charset=UTF-8");
-                            res.getWriter().write("{\"message\": \"로그인 실패: " + ex.getMessage() + "\"}");
-                        })
-                )
 
-                // 로그아웃 설정
-                .logout(logout -> logout
-                        .logoutUrl("/api/users/logout")
-                        .invalidateHttpSession(true)
-                        .deleteCookies("JSESSIONID")
-                        .logoutSuccessHandler((req, res, auth) -> {
-                            res.setStatus(HttpServletResponse.SC_OK);
-                            res.getWriter().write("Logout Success");
-                        })
-                )*/
 
                 // 접근 권한 설정
                 .authorizeHttpRequests(auth -> auth
@@ -84,6 +62,7 @@ public class SecurityConfig {
                                 "/api/users/signup",
                                 "/api/users/login",
                                 "/api/community/**",
+                                "/api/stats/**",
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
                                 "/swagger-ui.html"
@@ -102,4 +81,23 @@ public class SecurityConfig {
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
+
+    //CORS 상세 설정 빈 추가
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+
+        // 리액트 앱 주소 (Vite는 보통 5173, Create-React-App은 3000)
+        configuration.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:5173"));
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setExposedHeaders(List.of("Authorization"));
+        configuration.setAllowCredentials(true); // 쿠키나 인증 헤더 허용 시 필수
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
+    }
+
+
 }
