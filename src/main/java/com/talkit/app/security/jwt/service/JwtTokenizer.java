@@ -24,10 +24,10 @@ public class JwtTokenizer {
     private Key refreshKey;
 
 
-    @Value("${jwt.secretKey}")
+    @Value("${custom.jwt.secretKey}")
     private String accessSecret;
 
-    @Value("${jwt.refreshKey}")
+    @Value("${custom.jwt.refreshKey}")
     private String refreshSecret;
 
     @PostConstruct
@@ -105,6 +105,17 @@ public class JwtTokenizer {
     public String getEmailFromAccessToken(String token) {
         Claims claims = parseAccessToken(token); // accessKey를 사용하는 기존 메서드 활용
         return claims.getSubject();
+    }
+
+    // JwtTokenizer.java에 추가
+    public Long getUserIdFromRefreshToken(String token) {
+        Claims claims = parseRefreshToken(token);
+        return Long.valueOf(claims.get("userId").toString());
+    }
+
+    // 이메일 추출도 Refresh용으로 하나 더 (선택)
+    public String getEmailFromRefreshToken(String token) {
+        return parseRefreshToken(token).getSubject();
     }
 
 }
