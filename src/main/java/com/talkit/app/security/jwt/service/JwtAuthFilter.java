@@ -1,9 +1,6 @@
 package com.talkit.app.security.jwt.service;
 
-import com.talkit.app.domain.user.entity.User;
 import com.talkit.app.domain.user.repository.UserRepository;
-import com.talkit.app.global.exception.BusinessLogicException;
-import com.talkit.app.global.exception.ExceptionType;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
@@ -34,42 +31,52 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         FilterChain filterChain)
         throws ServletException, IOException {
 
-        String token = resolveToken(request);
-        log.info("1. 요청된 URI: {}",request.getRequestURI());
-        log.info("2. 추출된 토큰: {}",token);
+        try {
+            String token = resolveToken(request);
 
-        if (token != null){
-            if (jwtTokenizer.validateAccessToken(token)) {
+            // 1. 토큰이 존재하고 유효한 경우에만 인증 프로세스 진행
+            if (token != null && jwtTokenizer.validateAccessToken(token)) {
+
+                // 2. 토큰에서 사용자 정보 및 권한 추출
+                Long userId = jwtTokenizer.getUserIdFromAccessToken(token);
+                // 만약 jwtTokenizer에 getRole 메서드가 없다면 우선 "ROLE_USER"를 기본값으로 사용하세요.
+                String role = "ROLE_USER";
                 try {
-                    Long userId = jwtTokenizer.getUserIdFromAccessToken(token);
-                    User user = userRepository.findById(userId)
-                            .orElseThrow(() -> new BusinessLogicException(ExceptionType.NOT_FOUND_USER));
+                    // jwtTokenizer에 해당 메서드가 구현되어 있다면 동적으로 가져옵니다.
+                    // role = jwtTokenizer.getRoleFromAccessToken(token);
+                } catch (Exception e) {
+                    log.debug("권한 정보 추출 실패, 기본 권한 사용");
+                }
 
-                    List<SimpleGrantedAuthority> authorities =List.of(new SimpleGrantedAuthority("ROLE_USER"));
+                // 3. DB 조회를 통해 인증 객체 생성
+                userRepository.findById(userId).ifPresent(user -> {
+                    List<SimpleGrantedAuthority> authorities =
+                        List.of(new SimpleGrantedAuthority(role));
+
                     UsernamePasswordAuthenticationToken authentication =
-                            new UsernamePasswordAuthenticationToken(user, null, authorities);
+                        new UsernamePasswordAuthenticationToken(user.getId(), null, authorities);
 
                     SecurityContextHolder.getContext().setAuthentication(authentication);
-                    log.info("JWT 인증 성공 - userId={}", userId);
-                }catch (Exception e) {
-                    log.error("4. 인증 과정 중 에러: {}",e.getMessage());
+                    log.info("JWT 인증 성공 - userId={}, role={}", userId, role);
+                });
             }
-            }  else {
-                log.warn("4. 토큰이 유효하지 않음");
-            }
-        } else {
-            log.warn("5. 토큰이 헤더에 없음");
+        } catch (Exception e) {
+            // 필터 에러가 로그인 등 화이트리스트 경로를 방해하지 않도록 로그만 기록
+            log.error("JWT 필터 검증 중 에러 발생: {}", e.getMessage());
         }
 
+        // 4. 다음 필터로 전달 (매우 중요)
         filterChain.doFilter(request, response);
     }
 
     private String resolveToken(HttpServletRequest request) {
+        // Authorization 헤더에서 추출
         String header = request.getHeader("Authorization");
         if (StringUtils.hasText(header) && header.startsWith("Bearer ")) {
             return header.substring(7);
         }
 
+        // 쿠키에서 추출
         Cookie[] cookies = request.getCookies();
         if (cookies != null) {
             for (Cookie cookie : cookies) {
