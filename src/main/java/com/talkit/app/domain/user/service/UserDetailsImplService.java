@@ -2,7 +2,6 @@ package com.talkit.app.domain.user.service;
 
 import com.talkit.app.domain.user.entity.User;
 import com.talkit.app.domain.user.repository.UserRepository;
-import com.talkit.app.domain.user.UserDetailsImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
