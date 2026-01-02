@@ -1,6 +1,6 @@
 package com.talkit.app.global.auth;
 
-import com.talkit.app.domain.user.UserDetailsImpl;
+import com.talkit.app.domain.user.service.UserDetailsImpl;
 import com.talkit.app.domain.user.entity.User;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
