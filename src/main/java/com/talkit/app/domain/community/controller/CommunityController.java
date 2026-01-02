@@ -10,7 +10,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -27,11 +26,11 @@ public class CommunityController {
     @Operation(summary = "게시물 작성")
     @AuthenticatedUser
     @PostMapping("/create")
-    public ResponseDto<CommunityResponseDto> create(
-        @ModelAttribute @Valid CommunityRequestDto requestDto,
-        @AuthenticationPrincipal com.talkit.app.domain.user.entity.User user
+    public ResponseDto<CommunityResponseDto> communityCreate(
+        @ModelAttribute @Valid CommunityRequestDto requestDto
     ) {
-        return ResponseDto.of(communityService.createCommunity(requestDto, user.getId()), "게시물이 성공적으로 생성되었습니다.");
+        Long userId = AuthenticationHolder.getCurrentUserId();
+        return ResponseDto.of(communityService.createCommunity(requestDto, userId), "게시물이 성공적으로 생성되었습니다.");
     }
 
 }

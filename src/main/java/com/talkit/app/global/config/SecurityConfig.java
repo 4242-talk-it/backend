@@ -1,8 +1,8 @@
 package com.talkit.app.global.config;
 
-import com.talkit.app.domain.user.service.UserDetailsImplService;
 import com.talkit.app.security.jwt.service.JwtAuthFilter;
 import jakarta.servlet.http.HttpServletResponse;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -11,23 +11,37 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.stereotype.Component;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import java.util.List;
-
+@Component
 @RequiredArgsConstructor
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
-    private final UserDetailsImplService userDetailsImplService;
     private final JwtAuthFilter jwtAuthFilter;
+
+    private static final String[] WHITE_LIST = {
+        "/api/users/signup",
+        "/api/users/login",
+        "/api/auth/reissue",
+        "/swagger-ui/**",
+        "/v3/api-docs/**",
+        "/swagger-ui.html"
+    };
+
+    private static final String[] WHITE_LIST_COMMUNITY = {
+        "/api/community/**",
+        "/api/stats/**"
+    };
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -42,63 +56,52 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            .csrf(AbstractHttpConfigurer::disable)
+            .formLogin(AbstractHttpConfigurer::disable)
+            .httpBasic(AbstractHttpConfigurer::disable)
+            .sessionManagement(session -> session
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            )
 
-                // CSRF 비활성화 (Postman 테스트 및 API 서버용)
-                .csrf(AbstractHttpConfigurer::disable)
-
-                // HTTP Basic 인증 비활성화
-                .httpBasic(AbstractHttpConfigurer::disable)
-
-                .formLogin(AbstractHttpConfigurer::disable)
-                .logout(AbstractHttpConfigurer::disable)
-
-
-
-                // 접근 권한 설정
-                .authorizeHttpRequests(auth -> auth
-                        // 특정 권한이 필요한 경로
-                        .requestMatchers("/api/token/user").hasRole("USER")
-                        .requestMatchers("/api/community/{id}/comment/**","/api/community/{id}/like/**").hasRole("USER")
-
-
-                        // 화이트리스트: 인증 없이 접근 가능
-                        .requestMatchers(
-                                "/api/users/signup",
-                                "/api/users/login",
-                                "/api/community/**",
-                                "/api/stats/**",
-                                "/swagger-ui/**",
-                                "/v3/api-docs/**",
-                                "/swagger-ui.html",
-                                "/error"
-                        ).permitAll()
-
-
-
-                        // 그 외 모든 요청은 인증 필요
-                        .anyRequest().authenticated()
-                )
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
-                .build();
+            .exceptionHandling(exception -> exception
+                .authenticationEntryPoint((request, response, authException) -> {
+                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                    response.setContentType("application/json;charset=UTF-8");
+                    response.getWriter().write("{\"message\":\"인증에 실패했거나 권한이 없습니다.\"}");
+                    response.getWriter().flush();
+                })
+            )
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
+                .requestMatchers(WHITE_LIST).permitAll()
+                .requestMatchers(WHITE_LIST_COMMUNITY).permitAll()
+                .requestMatchers(
+                    "/api/community/{id}/comment/**",
+                    "/api/community/{id}/like/**",
+                    "/api/auth/status",
+                    "/api/auth/user"
+                ).hasAuthority("ROLE_USER")
+                .anyRequest().authenticated()
+            )
+            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+            .build();
     }
 
-    //CORS 상세 설정 빈 추가
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
+        CorsConfiguration config = new CorsConfiguration();
 
-        // 리액트 앱 주소 (Vite는 보통 5173, Create-React-App은 3000)
-        configuration.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:5173"));
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("*"));
-        configuration.setExposedHeaders(List.of("Authorization"));
-        configuration.setAllowCredentials(true); // 쿠키나 인증 헤더 허용 시 필수
+        config.setAllowedOrigins(List.of("http://localhost:5173", "http://127.0.0.1:5173"));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+        config.setAllowedHeaders(List.of("*"));
+        config.setAllowCredentials(true);
+        config.setMaxAge(3600L);
+
+        config.setExposedHeaders(List.of("Authorization", "Set-Cookie"));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
+        source.registerCorsConfiguration("/**", config);
         return source;
     }
-
-
 }

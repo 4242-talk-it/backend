@@ -1,4 +1,4 @@
-package com.talkit.app.domain.user;
+package com.talkit.app.domain.user.service;
 
 import java.util.Collection;
 import lombok.Builder;

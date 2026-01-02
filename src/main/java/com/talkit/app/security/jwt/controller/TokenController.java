@@ -1,30 +1,43 @@
 package com.talkit.app.security.jwt.controller;
 
+import com.talkit.app.domain.user.dto.UserResponseDto;
+import com.talkit.app.domain.user.entity.User;
+import com.talkit.app.domain.user.service.UserService;
 import com.talkit.app.security.jwt.service.TokenService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/token")
+@RequestMapping("/api/auth")
 @RequiredArgsConstructor
 @Tag(name = "토큰 생성 API")
 public class TokenController {
 
     private final TokenService tokenService;
+    private final UserService userService;
 
+    @Operation(summary = "현재 로그인 유저 정보 조회")
+    @GetMapping("/status")
+    public ResponseEntity<UserResponseDto> currentUser() {
+        Long userId = tokenService.getUserIdFromAccessToken();
+        User user = userService.findUserById(userId);
 
-    @Operation(
-        summary = "유저 역할 기반 Access Token 발급",
-        description = "일반 사용자 권한으로 Access Token을 발급합니다. 이메일 주소를 기반으로 토큰 생성이 수행됩니다."
-    )
-    @PostMapping("/user")
-    public ResponseEntity<Void> sendUserVerification() {
-        tokenService.createTokenByUserRole();
+        // DTO 내부의 from 메서드 호출
+        return ResponseEntity.ok(UserResponseDto.from(user));
+    }
+
+    @Operation(summary = "Access Token 재발급")
+    @PostMapping("/reissue")
+    public ResponseEntity<Void> reissue(HttpServletRequest request, HttpServletResponse response) {
+        tokenService.reissueTokens(request, response);
         return ResponseEntity.ok().build();
     }
 
