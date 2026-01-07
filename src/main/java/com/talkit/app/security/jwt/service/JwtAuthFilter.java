@@ -1,6 +1,8 @@
 package com.talkit.app.security.jwt.service;
 
 import com.talkit.app.domain.user.repository.UserRepository;
+import com.talkit.app.domain.user.service.UserDetailsImpl;
+import com.talkit.app.global.auth.AuthenticationHolder;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
@@ -50,11 +52,12 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
                 // 3. DB 조회를 통해 인증 객체 생성
                 userRepository.findById(userId).ifPresent(user -> {
-                    List<SimpleGrantedAuthority> authorities =
-                        List.of(new SimpleGrantedAuthority(role));
+                    List<SimpleGrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(role));
+
+                    UserDetailsImpl userDetails = UserDetailsImpl.from(user);
 
                     UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(user.getId(), null, authorities);
+                        new UsernamePasswordAuthenticationToken(userDetails, null, authorities);
 
                     SecurityContextHolder.getContext().setAuthentication(authentication);
                     log.info("JWT 인증 성공 - userId={}, role={}", userId, role);
