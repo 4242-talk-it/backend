@@ -22,8 +22,14 @@ public class CommunityService {
 
     @Transactional
     public CommunityResponseDto createCommunity(CommunityRequestDto requestDto, Long userId) {
+        System.out.println("조회하려는 유저 ID: " + userId);
+
         User user = userRepository.findById(userId)
-            .orElseThrow(NOT_FOUND_USER::of);
+                .orElseThrow(() -> {
+                    System.out.println("DB에서 유저를 찾지 못함. ID: " + userId);
+                    return NOT_FOUND_USER.of();
+                });
+        //.orElseThrow(NOT_FOUND_USER::of);
 
         Community community = Community.of(
             user,
