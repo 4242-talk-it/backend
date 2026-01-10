@@ -1,11 +1,14 @@
 package com.talkit.app.domain.community.controller;
 
+import com.talkit.app.domain.community.dto.CommunityListResponseDto;
 import com.talkit.app.domain.community.dto.CommunityRequestDto;
 import com.talkit.app.domain.community.dto.CommunityResponseDto;
 import com.talkit.app.domain.community.service.CommunityService;
 import com.talkit.app.global.auth.AuthenticatedUser;
 import com.talkit.app.global.auth.AuthenticationHolder;
 import com.talkit.app.global.dto.ResponseDto;
+import com.talkit.app.global.page.dto.PageRequestVO;
+import com.talkit.app.global.page.dto.PageResponseDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -20,14 +23,45 @@ public class CommunityController {
 
     private final CommunityService communityService;
 
+    @Operation(summary = "게시물 단일 조회")
+    @GetMapping("/{id}")
+    public ResponseDto<CommunityResponseDto> getCommunityById(@PathVariable Long id) {
+        Long userId = AuthenticationHolder.getCurrentUserId();
+        return ResponseDto.of(communityService.getCommunityById(id, userId));
+    }
+
+    @Operation(summary = "게시물 목록 조회")
+    @GetMapping("/list")
+    public ResponseDto<PageResponseDto<CommunityListResponseDto>> list(PageRequestVO pageRequestVO) {
+        Long userId = AuthenticationHolder.getCurrentUserId();
+        return ResponseDto.of(communityService.pagesByCommunity(userId, pageRequestVO));
+    }
+
+    @Operation(summary = "수정 페이지용 게시물 조회")
+    @AuthenticatedUser
+    @GetMapping("/edit/{id}")
+    public ResponseDto<CommunityResponseDto> getPostForEdit(@PathVariable Long id) {
+        Long userId = AuthenticationHolder.getCurrentUserId();
+        return ResponseDto.of(communityService.getPostForEdit(id, userId), "게시물을 성공적으로 가져왔습니다.");
+    }
+
     @Operation(summary = "게시물 작성")
     @AuthenticatedUser
     @PostMapping("/create")
-    public ResponseDto<CommunityResponseDto> communityCreate(
-        @RequestBody @Valid CommunityRequestDto requestDto
-    ) {
+    public ResponseDto<CommunityResponseDto> communityCreate(@RequestBody @Valid CommunityRequestDto requestDto) {
         Long userId = AuthenticationHolder.getCurrentUserId();
         return ResponseDto.of(communityService.createCommunity(requestDto, userId), "게시물이 성공적으로 생성되었습니다.");
+    }
+
+    @Operation(summary = "게시물 수정")
+    @AuthenticatedUser
+    @PutMapping("/{id}")
+    public ResponseDto<CommunityResponseDto> update(
+        @RequestBody @Valid CommunityRequestDto requestDto,
+        @PathVariable("id") Long communityId) {
+
+        Long userId = AuthenticationHolder.getCurrentUserId();
+        return ResponseDto.of(communityService.updateCommunity(communityId, requestDto, userId), "게시물이 성공적으로 수정되었습니다.");
     }
 
 }
