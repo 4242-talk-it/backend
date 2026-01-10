@@ -29,7 +29,6 @@ bin/
 out/
 !**/src/main/**/out/
 !**/src/test/**/out/
-src
 src/main/resources/application.yml
 src/main/resources/application-docker.yml
 docker-compose.yml
