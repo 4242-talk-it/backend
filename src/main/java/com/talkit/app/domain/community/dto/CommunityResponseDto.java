@@ -23,6 +23,7 @@ public record CommunityResponseDto(
             .id(community.getId())
             .title(community.getTitle())
             .content(community.getContent())
+            .category(community.getCategory())
             .nickname(community.getUser().getNickname())
             .isOwnedByUser(community.getUser().getId().equals(userId))
             .createdAt(community.getCreatedAt())
