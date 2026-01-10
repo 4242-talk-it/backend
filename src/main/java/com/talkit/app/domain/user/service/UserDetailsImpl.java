@@ -1,5 +1,6 @@
 package com.talkit.app.domain.user.service;
 
+import com.talkit.app.domain.user.entity.User;
 import java.util.Collection;
 import java.util.List;
 

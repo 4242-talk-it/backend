@@ -2,7 +2,6 @@ package com.talkit.app.security.jwt.service;
 
 import com.talkit.app.domain.user.repository.UserRepository;
 import com.talkit.app.domain.user.service.UserDetailsImpl;
-import com.talkit.app.global.auth.AuthenticationHolder;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
@@ -41,14 +40,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
                 // 2. 토큰에서 사용자 정보 및 권한 추출
                 Long userId = jwtTokenizer.getUserIdFromAccessToken(token);
-                // 만약 jwtTokenizer에 getRole 메서드가 없다면 우선 "ROLE_USER"를 기본값으로 사용하세요.
                 String role = "ROLE_USER";
-                try {
-                    // jwtTokenizer에 해당 메서드가 구현되어 있다면 동적으로 가져옵니다.
-                    // role = jwtTokenizer.getRoleFromAccessToken(token);
-                } catch (Exception e) {
-                    log.debug("권한 정보 추출 실패, 기본 권한 사용");
-                }
 
                 // 3. DB 조회를 통해 인증 객체 생성
                 userRepository.findById(userId).ifPresent(user -> {
@@ -56,16 +48,14 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
                     UserDetailsImpl userDetails = UserDetailsImpl.from(user);
 
+                    // 2. Principal 자리에 userDetails 객체 주입
                     UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(userDetails, null, authorities);
 
                     SecurityContextHolder.getContext().setAuthentication(authentication);
-                    log.info("JWT 인증 성공 - userId={}, role={}", userId, role);
                 });
             }
         } catch (Exception e) {
-            // 필터 에러가 로그인 등 화이트리스트 경로를 방해하지 않도록 로그만 기록
-            log.error("JWT 필터 검증 중 에러 발생: {}", e.getMessage());
         }
 
         // 4. 다음 필터로 전달 (매우 중요)

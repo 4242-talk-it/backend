@@ -46,6 +46,6 @@ public class Comment extends BaseEntity {
     private String content; //댓글 내용
 
     @OneToMany(mappedBy = "comment", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<CommentLike> commentLikeList = new ArrayList<>(); //댓글 좋아요
+    private List<CommentLike> commentLikeList = new ArrayList<>();
 }
 

@@ -16,5 +16,4 @@ public class AuthenticationHolder {
         }
         return User.ANONYMOUS_USER_ID;
     }
-
 }
