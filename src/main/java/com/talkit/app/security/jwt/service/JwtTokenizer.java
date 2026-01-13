@@ -24,10 +24,10 @@ public class JwtTokenizer {
     private Key refreshKey;
 
 
-    @Value("${custom.jwt.secretKey}")
+    @Value("${JWT_SECRET_KEY}")
     private String accessSecret;
 
-    @Value("${custom.jwt.refreshKey}")
+    @Value("${JWT_REFRESH_KEY}")
     private String refreshSecret;
 
     @PostConstruct

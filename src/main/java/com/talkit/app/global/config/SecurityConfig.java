@@ -39,7 +39,7 @@ public class SecurityConfig {
     };
 
     private static final String[] WHITE_LIST_COMMUNITY = {
-        "/api/community/**",
+        //"/api/community/**",
         "/api/stats/**"
     };
 
@@ -78,10 +78,13 @@ public class SecurityConfig {
                 .requestMatchers(WHITE_LIST_COMMUNITY).permitAll()
                 .requestMatchers(
                     "/api/community/create",      // 게시글 작성
+                        "/api/community/list",
+                    "/api/community/{id}",
                     "/api/community/{id}/like/**", // 좋아요
                     "/api/community/{id}/comment/**", // 댓글 작성
                     "/api/community/edit/**",      // 수정 페이지 조회
-                    "/api/auth/status",
+                        "/api/community/post/{id}",
+                        "/api/auth/status",
                     "/api/auth/user"
                 ).hasAuthority("ROLE_USER")
                 .anyRequest().authenticated()

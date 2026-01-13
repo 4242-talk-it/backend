@@ -18,6 +18,8 @@ import com.talkit.app.global.page.dto.PageRequestVO;
 import com.talkit.app.global.page.dto.PageResponseDto;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Arrays;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -52,20 +54,16 @@ public class CommunityService {
 
     @Transactional
     public CommunityResponseDto createCommunity(CommunityRequestDto requestDto, Long userId) {
-        System.out.println("조회하려는 유저 ID: " + userId);
-
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> {
-                    System.out.println("DB에서 유저를 찾지 못함. ID: " + userId);
-                    return NOT_FOUND_USER.of();
-                });
-        //.orElseThrow(NOT_FOUND_USER::of);
+                .orElseThrow(NOT_FOUND_USER::of);
 
+        List<String> tagList = (requestDto.tags() != null) ? requestDto.tags() : new ArrayList<>();
         Community community = Community.of(
-            user,
-            requestDto.title(),
-            requestDto.content(),
-            requestDto.category()
+                user,
+                requestDto.title(),
+                requestDto.content(),
+                requestDto.category(),
+                tagList
         );
 
         communityRepository.save(community);
@@ -77,11 +75,13 @@ public class CommunityService {
     public CommunityResponseDto updateCommunity(Long id, CommunityRequestDto requestDto, Long userId) {
         Community community = getCommunity(id);
         validateOwnership(community, userId);
+        List<String> tagList = (requestDto.tags() != null) ? requestDto.tags() : new ArrayList<>();
 
         community.update(
             requestDto.title(),
             requestDto.content(),
-            requestDto.category()
+            requestDto.category(),
+            tagList
         );
 
         return CommunityResponseDto.of(community, userId);
@@ -95,7 +95,7 @@ public class CommunityService {
     }
 
     private Community getCommunity(Long id) {
-        return communityRepository.findById(id)
+        return communityRepository.findWithTagsById(id)
             .orElseThrow(NOT_FOUND_COMMUNITY::of);
     }
 
