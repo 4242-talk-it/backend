@@ -6,6 +6,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -16,19 +17,18 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.stereotype.Component;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-@Component
-@RequiredArgsConstructor
 @Configuration
 @EnableWebSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
 
+    // 인증 없이 접근 가능한 공통 화이트리스트
     private static final String[] WHITE_LIST = {
         "/api/users/signup",
         "/api/users/login",
@@ -36,11 +36,6 @@ public class SecurityConfig {
         "/swagger-ui/**",
         "/v3/api-docs/**",
         "/swagger-ui.html"
-    };
-
-    private static final String[] WHITE_LIST_COMMUNITY = {
-        //"/api/community/**",
-        "/api/stats/**"
     };
 
     @Bean
@@ -63,30 +58,27 @@ public class SecurityConfig {
             .sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
-
             .exceptionHandling(exception -> exception
                 .authenticationEntryPoint((request, response, authException) -> {
+                    // 절대 딴데로 보내지(Redirect) 말고 딱 이것만 실행하세요.
                     response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                     response.setContentType("application/json;charset=UTF-8");
-                    response.getWriter().write("{\"message\":\"인증에 실패했거나 권한이 없습니다.\"}");
+                    response.getWriter().write("{\"message\":\"Uncertified\"}");
                     response.getWriter().flush();
                 })
             )
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers(WHITE_LIST).permitAll()
-                .requestMatchers(WHITE_LIST_COMMUNITY).permitAll()
+
+                // 커뮤니티, 통계, 인증 상태 확인 등 로그인이 필요한 모든 API
                 .requestMatchers(
-                    "/api/community/create",      // 게시글 작성
-                        "/api/community/list",
-                    "/api/community/{id}",
-                    "/api/community/{id}/like/**", // 좋아요
-                    "/api/community/{id}/comment/**", // 댓글 작성
-                    "/api/community/edit/**",      // 수정 페이지 조회
-                        "/api/community/post/{id}",
-                        "/api/auth/status",
+                    "/api/community/**",
+                    "/api/stats/**",
+                    "/api/auth/status",
                     "/api/auth/user"
                 ).hasAuthority("ROLE_USER")
+
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
@@ -97,12 +89,12 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
 
+        // 팀원이 혹시 IP로 접속할 경우를 대비해 127.0.0.1 추가 유지
         config.setAllowedOrigins(List.of("http://localhost:5173", "http://127.0.0.1:5173"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
         config.setMaxAge(3600L);
-
         config.setExposedHeaders(List.of("Authorization", "Set-Cookie"));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
