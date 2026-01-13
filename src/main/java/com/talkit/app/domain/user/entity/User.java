@@ -70,4 +70,11 @@ public class User extends BaseEntity {
     // ===== 댓글 좋아요 =====
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CommentLike> commentLikeList = new ArrayList<>();
+
+    public void changeNickname(String newNickname) {
+        if (newNickname == null || newNickname.isBlank()) {
+            throw new IllegalArgumentException("닉네임은 공백일 수 없습니다.");
+        }
+        this.nickname = newNickname;
+    }
 }
