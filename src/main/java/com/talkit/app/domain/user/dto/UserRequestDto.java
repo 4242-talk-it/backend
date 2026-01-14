@@ -2,6 +2,7 @@ package com.talkit.app.domain.user.dto;
 
 import lombok.Getter;
 
+@Getter
 public class UserRequestDto {
 
     @Getter
@@ -22,5 +23,19 @@ public class UserRequestDto {
     @Getter
     public static class UpdateNickname {
         private String nickname;
+    }
+
+    @Getter
+    public static class UpdatePassword {
+        private String currentPassword;
+        private String newPassword;
+
+        public String getCurrentPassword() {
+            return currentPassword;
+        }
+
+        public String getNewPassword() {
+            return newPassword;
+        }
     }
 }

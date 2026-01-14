@@ -18,7 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RequiredArgsConstructor
-@Tag(name = "회원가입 및 로그인/로그아웃", description = "회원가입 및 로그인/로그아웃 관련 API")
+@Tag(name = "회원가입 및 로그인/로그아웃", description = "회원가입 및 로그인/로그아웃 및 프로필 수정 관련 API")
 @RestController
 @RequestMapping("/api/users")
 public class UserAuthController {
@@ -56,12 +56,33 @@ public class UserAuthController {
     }
 
     @Operation(summary = "닉네임 수정")
-    @AuthenticatedUser // 커뮤니티 컨트롤러처럼 인증 어노테이션 추가
+    @AuthenticatedUser
     @PatchMapping("/nickname")
     public ResponseDto<String> updateNickname(@RequestBody UserRequestDto.UpdateNickname request) {
         Long userId = AuthenticationHolder.getCurrentUserId();
         String updatedNickname = userService.updateNickname(userId, request);
 
         return ResponseDto.of(updatedNickname, "닉네임이 성공적으로 수정되었습니다.");
+    }
+
+    @Operation(summary = "현재 비밀번호 확인 (변경 전 검증)")
+    @AuthenticatedUser
+    @PostMapping("/verify-password")
+    public ResponseDto<Boolean> verifyPassword(@RequestBody Map<String, String> request) {
+        Long userId = AuthenticationHolder.getCurrentUserId();
+        String currentPassword = request.get("currentPassword");
+        userService.verifyPassword(userId, currentPassword);
+
+        return ResponseDto.of(true, "비밀번호가 일치합니다.");
+    }
+
+    @Operation(summary = "비밀번호 변경")
+    @AuthenticatedUser
+    @PatchMapping("/update-password")
+    public ResponseDto<Void> updatePassword(@RequestBody UserRequestDto.UpdatePassword request) {
+        Long userId = AuthenticationHolder.getCurrentUserId();
+        userService.updatePassword(userId, request);
+
+        return ResponseDto.of(null, "비밀번호가 성공적으로 변경되었습니다.");
     }
 }

@@ -12,7 +12,7 @@ public enum ExceptionType {
     OK(HttpStatus.OK, "Success"),
 
     // BAD_REQUEST(400)
-
+    INVALID_PASSWORD(HttpStatus.BAD_REQUEST, "현재 비밀번호가 일치하지 않습니다."),
 
     // UNAUTHORIZED(401)
     // 토큰 누락
