@@ -64,4 +64,13 @@ public class CommunityController {
         return ResponseDto.of(communityService.updateCommunity(communityId, requestDto, userId), "게시물이 성공적으로 수정되었습니다.");
     }
 
+    @Operation(summary = "게시물 삭제")
+    @AuthenticatedUser // 인증 체크 어노테이션
+    @DeleteMapping("/{id}")
+    public ResponseDto<Void> delete(@PathVariable("id") Long id) {
+        Long userId = AuthenticationHolder.getCurrentUserId();
+        communityService.deleteCommunity(id, userId);
+        return ResponseDto.of(null, "게시물이 성공적으로 삭제되었습니다.");
+    }
+
 }
