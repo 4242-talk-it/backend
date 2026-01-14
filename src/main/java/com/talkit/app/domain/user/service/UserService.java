@@ -55,9 +55,29 @@ public class UserService {
         return user.getNickname();
     }
 
+    @Transactional(readOnly = true)
+    public void verifyPassword(Long userId, String password) {
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new BusinessLogicException(ExceptionType.NOT_FOUND_USER));
+
+        if (!passwordEncoder.matches(password, user.getPassword())) {
+            throw new BusinessLogicException(ExceptionType.INVALID_PASSWORD);
+        }
+    }
+
+    @Transactional
+    public void updatePassword(Long userId, UserRequestDto.UpdatePassword request) {
+        verifyPassword(userId, request.getCurrentPassword());
+
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new BusinessLogicException(ExceptionType.NOT_FOUND_USER));
+
+        String encodedNewPassword = passwordEncoder.encode(request.getNewPassword());
+        user.changePassword(encodedNewPassword);
+    }
+
     public User findUserById(Long id) {
         return userRepository.findById(id)
             .orElseThrow(() -> new BusinessLogicException(ExceptionType.NOT_FOUND_USER));
-
     }
 }
