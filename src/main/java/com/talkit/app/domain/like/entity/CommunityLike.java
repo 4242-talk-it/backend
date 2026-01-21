@@ -43,4 +43,11 @@ public class CommunityLike extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "community_id", nullable = false)
     private Community community; //글 식별키
+
+    public static CommunityLike of(User user, Community community) {
+        return CommunityLike.builder()
+            .user(user)
+            .community(community)
+            .build();
+    }
 }
