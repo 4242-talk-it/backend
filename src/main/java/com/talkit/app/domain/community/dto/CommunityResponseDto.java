@@ -15,13 +15,20 @@ public record CommunityResponseDto(
     String nickname,
     List<String> tags,
     int likeCount,
-    int commentCount,
     boolean isLiked,
+    int commentCount,
     boolean isOwnedByUser,
     LocalDateTime createdAt,
     LocalDateTime updatedAt
 ) {
+
     public static CommunityResponseDto of(Community community, Long userId) {
+        return CommunityResponseDto.of(community, userId, false, 0, 0);
+    }
+
+    public static CommunityResponseDto of(
+        Community community, Long userId, boolean isLiked, int likeCount, int commentCount
+    ) {
         return CommunityResponseDto.builder()
             .id(community.getId())
             .title(community.getTitle())
@@ -29,6 +36,9 @@ public record CommunityResponseDto(
             .category(community.getCategory())
             .nickname(community.getUser().getNickname())
             .tags(community.getTags())
+            .likeCount(likeCount)
+            .isLiked(isLiked)
+            .commentCount(commentCount)
             .isOwnedByUser(community.getUser().getId().equals(userId))
             .createdAt(community.getCreatedAt())
             .updatedAt(community.getUpdatedAt())
