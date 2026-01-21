@@ -39,18 +39,25 @@ public class Community extends BaseEntity {
     @Column(name = "category", nullable = false)
     private String category;
 
+    @Column(name = "view_count", nullable = false)
+    @Builder.Default
+    private int viewCount = 0;
+
     @OneToMany(mappedBy = "community", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Comment> commentList = new ArrayList<>();
 
     @OneToMany(mappedBy = "community", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CommunityLike> communityLikeList = new ArrayList<>();
 
-
     @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "community_tags", joinColumns = @JoinColumn(name = "community_id"))
     @Column(name = "tag_name")
     @Builder.Default // Builder 사용 시 리스트 초기화 보장
     private List<String> tags = new ArrayList<>();
+
+    public void incrementViewCount() {
+        this.viewCount++;
+    }
 
     // 생성 메서드 수정
     public static Community of(User user, String title, String content, String category, List<String> tags) {
@@ -62,7 +69,6 @@ public class Community extends BaseEntity {
                 .tags(tags)
                 .build();
     }
-
 
     public void update(String title, String content, String category,List<String> tags) {
 

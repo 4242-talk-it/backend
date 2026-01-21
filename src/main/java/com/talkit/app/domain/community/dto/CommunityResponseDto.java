@@ -14,6 +14,7 @@ public record CommunityResponseDto(
     String category,
     String nickname,
     List<String> tags,
+    int viewCount,
     int likeCount,
     boolean isLiked,
     int commentCount,
@@ -36,6 +37,7 @@ public record CommunityResponseDto(
             .category(community.getCategory())
             .nickname(community.getUser().getNickname())
             .tags(community.getTags())
+            .viewCount(community.getViewCount())
             .likeCount(likeCount)
             .isLiked(isLiked)
             .commentCount(commentCount)
