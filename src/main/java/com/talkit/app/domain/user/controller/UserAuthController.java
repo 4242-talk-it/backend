@@ -3,6 +3,7 @@ package com.talkit.app.domain.user.controller;
 import com.talkit.app.domain.user.dto.UserRequestDto;
 import com.talkit.app.domain.user.dto.UserResponseDto;
 import com.talkit.app.domain.user.entity.User;
+import com.talkit.app.domain.user.service.UserDetailsImpl;
 import com.talkit.app.domain.user.service.UserService;
 import com.talkit.app.global.auth.AuthenticatedUser;
 import com.talkit.app.global.auth.AuthenticationHolder;
@@ -14,7 +15,11 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import org.apache.catalina.security.SecurityUtil;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 @RequiredArgsConstructor
@@ -85,4 +90,30 @@ public class UserAuthController {
 
         return ResponseDto.of(null, "비밀번호가 성공적으로 변경되었습니다.");
     }
+
+    @Operation(summary = "회원 탈퇴")
+    @PatchMapping("/withdraw")
+    public ResponseEntity<String> withdraw(
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
+            HttpServletResponse response
+    ) {
+        if(userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("인증 정보가 없습니다.");
+        }
+        Long userId = userDetails.getId();
+        userService.withdraw(userId);
+        tokenService.expireCookie(response, "accessToken");
+        tokenService.expireCookie(response, "refreshToken");
+
+        return ResponseEntity.ok("회원 탈퇴 요청이 완료되었습니다. 로그아웃 처리되었으며, 한 달 뒤 모든 정보가 삭제됩니다.");
+    }
+
+    @Operation(summary="회원 탈퇴 철회")
+    @PatchMapping("/restore")
+    public ResponseDto<Void> restore(@RequestBody Map<String, String> request) {
+        String email = request.get("email");
+        userService.restoreUser(email);
+        return ResponseDto.of(null,"계정이 복구되었습니다. 다시 로그인해주세요.");
+    }
+
 }

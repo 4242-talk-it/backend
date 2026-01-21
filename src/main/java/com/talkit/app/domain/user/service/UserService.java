@@ -21,6 +21,10 @@ public class UserService {
         User user = userRepository.findByEmail(request.getEmail())
             .orElseThrow(() -> new BusinessLogicException(ExceptionType.NOT_FOUND_USER));
 
+        if (user.getDeleteAt() != null) {
+            throw new BusinessLogicException(ExceptionType.ALREADY_WITHDRAWN);
+        }
+
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new BusinessLogicException(ExceptionType.NOT_FOUND_USER);
         }
@@ -79,5 +83,28 @@ public class UserService {
     public User findUserById(Long id) {
         return userRepository.findById(id)
             .orElseThrow(() -> new BusinessLogicException(ExceptionType.NOT_FOUND_USER));
+    }
+
+    @Transactional
+    public void withdraw(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+
+        if (user.getDeleteAt() != null) {
+            throw new IllegalStateException("이미 탈퇴 처리 중인 계정입니다.");
+        }
+        user.withdraw();
+    }
+
+    //회원탈퇴 철회
+    @Transactional
+    public void restoreUser(String email){
+        User user=userRepository.findByEmail(email)
+                .orElseThrow(()-> new BusinessLogicException(ExceptionType.NOT_FOUND_USER));
+
+        if(user.getDeleteAt() !=null) {
+            user.restore();
+        }
     }
 }
