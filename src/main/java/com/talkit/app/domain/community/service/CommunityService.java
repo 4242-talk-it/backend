@@ -32,8 +32,10 @@ public class CommunityService {
     private final CommunityCommentRepository communityCommentRepository;
     private final UserRepository userRepository;
 
+    @Transactional
     public CommunityResponseDto getCommunityById(Long id, Long userId) {
         Community community = getCommunity(id);
+        community.incrementViewCount();
 
         boolean isLiked = !userId.equals(User.ANONYMOUS_USER_ID) &&
             communityLikeRepository.findByUserIdAndCommunityId(userId, id).isPresent();
