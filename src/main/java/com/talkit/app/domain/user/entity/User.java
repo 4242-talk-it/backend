@@ -13,6 +13,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.AllArgsConstructor;
@@ -55,8 +56,21 @@ public class User extends BaseEntity {
     @Column(name = "sso_provider", length = 50)
     private String ssoProvider;
 
+    @Column(name="deleted_at")
+    private LocalDate deleteAt;
+
+    //회원 탈퇴 요청
+    public void withdraw() {
+        this.deleteAt = LocalDate.now();
+    }
+
+    //회원 탈퇴 철회
+    public void restore() {
+        this.deleteAt=null;
+    }
+
     // ===== 게시글 =====
-    @OneToMany(mappedBy = "user")
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Community> communityList = new ArrayList<>();
 
     // ===== 게시글 좋아요 =====

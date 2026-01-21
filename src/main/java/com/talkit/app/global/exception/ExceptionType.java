@@ -13,6 +13,7 @@ public enum ExceptionType {
 
     // BAD_REQUEST(400)
     INVALID_PASSWORD(HttpStatus.BAD_REQUEST, "현재 비밀번호가 일치하지 않습니다."),
+    ALREADY_WITHDRAWN(HttpStatus.BAD_REQUEST, "회원탈퇴 요청이 된 사용자입니다."),
 
     // UNAUTHORIZED(401)
     // 토큰 누락
