@@ -1,4 +1,4 @@
-package com.talkit.app.security.jwt.service;
+package com.talkit.app.global.security.jwt;
 
 import com.talkit.app.domain.user.repository.UserRepository;
 import com.talkit.app.domain.user.service.UserDetailsImpl;

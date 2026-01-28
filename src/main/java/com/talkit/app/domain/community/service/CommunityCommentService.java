@@ -8,7 +8,7 @@ import com.talkit.app.domain.community.repository.CommunityCommentRepository;
 import com.talkit.app.domain.community.repository.CommunityRepository;
 import com.talkit.app.domain.user.entity.User;
 import com.talkit.app.domain.user.repository.UserRepository;
-import com.talkit.app.global.page.dto.PageResponseDto;
+import com.talkit.app.global.dto.PageResponseDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;

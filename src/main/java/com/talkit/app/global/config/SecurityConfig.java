@@ -1,6 +1,6 @@
 package com.talkit.app.global.config;
 
-import com.talkit.app.security.jwt.service.JwtAuthFilter;
+import com.talkit.app.global.security.jwt.JwtAuthFilter;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.List;
 import lombok.RequiredArgsConstructor;

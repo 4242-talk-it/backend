@@ -1,9 +1,9 @@
-package com.talkit.app.security.jwt.controller;
+package com.talkit.app.global.security.token.controller;
 
 import com.talkit.app.domain.user.dto.UserResponseDto;
 import com.talkit.app.domain.user.entity.User;
 import com.talkit.app.domain.user.service.UserService;
-import com.talkit.app.security.jwt.service.TokenService;
+import com.talkit.app.global.security.token.service.TokenService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
@@ -28,9 +28,11 @@ public class TokenController {
     @GetMapping("/status")
     public ResponseEntity<UserResponseDto> currentUser() {
         Long userId = tokenService.getUserIdFromAccessToken();
-        User user = userService.findUserById(userId);
+        if (userId == null) {
+            return ResponseEntity.noContent().build();
+        }
 
-        // DTO 내부의 from 메서드 호출
+        User user = userService.findUserById(userId);
         return ResponseEntity.ok(UserResponseDto.from(user));
     }
 

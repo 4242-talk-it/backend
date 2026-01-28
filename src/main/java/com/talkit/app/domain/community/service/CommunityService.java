@@ -12,8 +12,8 @@ import com.talkit.app.domain.like.entity.CommunityLike;
 import com.talkit.app.domain.like.repository.CommunityLikeRepository;
 import com.talkit.app.domain.user.entity.User;
 import com.talkit.app.domain.user.repository.UserRepository;
-import com.talkit.app.global.page.dto.PageRequestVO;
-import com.talkit.app.global.page.dto.PageResponseDto;
+import com.talkit.app.global.dto.PageRequestVO;
+import com.talkit.app.global.dto.PageResponseDto;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -1,9 +1,10 @@
-package com.talkit.app.security.jwt.service;
+package com.talkit.app.global.security.token.service;
 
 import com.talkit.app.domain.user.entity.User;
 import com.talkit.app.domain.user.repository.UserRepository;
 import com.talkit.app.global.exception.BusinessLogicException;
 import com.talkit.app.global.exception.ExceptionType;
+import com.talkit.app.global.security.jwt.JwtTokenizer;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -37,11 +38,13 @@ public class TokenService {
                 }
             }
         }
-        throw new BusinessLogicException(ExceptionType.ACCESS_TOKEN_NOT_FOUND);
+        return null;
     }
 
     public Long getUserIdFromAccessToken() {
         String token = getAccessToken();
+        if (token == null)
+            return null;
         return jwtTokenizer.getUserIdFromAccessToken(token);
     }
 
