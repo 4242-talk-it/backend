@@ -80,7 +80,8 @@ public class SecurityConfig {
                 .requestMatchers(
                     "/api/community/**",
                     "/api/stats/**",
-                    "/api/auth/user"
+                    "/api/auth/user",
+                    "/api/ai-chat/**"
                 ).hasAuthority("ROLE_USER")
 
                 .anyRequest().authenticated()
