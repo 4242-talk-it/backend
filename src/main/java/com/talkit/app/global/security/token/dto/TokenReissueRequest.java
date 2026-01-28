@@ -1,4 +1,4 @@
-package com.talkit.app.security.jwt.dto.request;
+package com.talkit.app.global.security.token.dto;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;

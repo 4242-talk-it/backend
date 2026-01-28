@@ -1,4 +1,4 @@
-package com.talkit.app.global.page.dto;
+package com.talkit.app.global.dto;
 
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;

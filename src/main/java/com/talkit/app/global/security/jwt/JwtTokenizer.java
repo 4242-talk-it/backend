@@ -1,4 +1,4 @@
-package com.talkit.app.security.jwt.service;
+package com.talkit.app.global.security.jwt;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
