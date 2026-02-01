@@ -31,8 +31,8 @@ public enum ExceptionType {
     //NOT_FOUND(HttpStatus.NOT_FOUND, "데이터가 존재하지 않음"),
     NOT_FOUND_USER(HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다."),
     NOT_FOUND_COMMUNITY(HttpStatus.NOT_FOUND, "게시물을 찾을 수 없습니다."),
-    //NOT_FOUND_RECIPE_FAVORITE(HttpStatus.NOT_FOUND, "즐겨찾기한 레시피가 없습니다."),
-    //NOT_FOUND_COMMENT(HttpStatus.NOT_FOUND, "댓글을 찾을 수 없습니다."),
+    NOT_FOUND_SITUATION(HttpStatus.NOT_FOUND, "상황을 찾을 수 없습니다."),
+    NOT_FOUND_AI_CHAT_ROOM(HttpStatus.NOT_FOUND, "채팅방을 찾을 수 없습니다."),
 
     // Internal Server Error(500)
     //SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 에러"),

@@ -5,6 +5,7 @@ import com.talkit.app.domain.user.entity.User;
 import com.talkit.app.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
@@ -33,6 +34,7 @@ public class AiChatRoom extends BaseEntity {
     @JoinColumn(name = "ai_situation_id", nullable = false)
     private AiSituation aiSituation;
 
+    @Builder.Default
     @OneToMany(mappedBy = "aiChatRoom", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<AiChatMessage> messages = new ArrayList<>();
 
