@@ -15,6 +15,7 @@ import com.talkit.app.domain.user.repository.UserRepository;
 import com.talkit.app.global.exception.ExceptionType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
@@ -63,6 +64,11 @@ public class AiChatService {
         AiChatRoom chatRoom = aiChatRoomRepository.findById(chatRoomId)
                 .orElseThrow(ExceptionType.NOT_FOUND_AI_CHAT_ROOM::of);
 
+        // 권한 없음 예외 발생
+        if (!chatRoom.getUser().getId().equals(userId)) {
+            throw ExceptionType.FORBIDDEN_ACCESS.of();
+        }
+
         // 기존 메시지 내역 조회 (시간순 정렬)
         List<AiChatMessage> messageHistory = aiChatMessageRepository.findByAiChatRoomOrderByCreatedAtAsc(chatRoom);
         // 사용자 메시지 먼저 DB 저장
@@ -101,9 +107,9 @@ public class AiChatService {
     }
 
     @Transactional(readOnly = true)
-    public List<AiChatRoomResponseDto> getMyAiChatRoom(Long userId) {
+    public List<AiChatRoomResponseDto> getMyAiChatRoom(Long userId, Pageable pageable) {
         User user = userRepository.findById(userId).orElseThrow(NOT_FOUND_USER::of);
-        return aiChatRoomRepository.findAllByUserWithSituation(user)
+        return aiChatRoomRepository.findAllByUserWithSituation(user, pageable)
                 .stream()
                 .map(AiChatRoomResponseDto::of)
                 .toList();

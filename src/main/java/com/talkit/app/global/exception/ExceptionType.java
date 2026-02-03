@@ -26,6 +26,7 @@ public enum ExceptionType {
 
 
     // Forbidden(403)
+    FORBIDDEN_ACCESS(HttpStatus.FORBIDDEN, "해당 콘텐츠에 접근할 권한이 없습니다."),
 
     // NOT_FOUND(404)
     //NOT_FOUND(HttpStatus.NOT_FOUND, "데이터가 존재하지 않음"),
