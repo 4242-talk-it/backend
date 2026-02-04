@@ -14,4 +14,5 @@ public class ChatRoomResponse {
     private String topic;
     private String partnerNickname; // 상대방 이름 (익명 처리용)
     private boolean isMatched;
+    private Long userId;
 }

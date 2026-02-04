@@ -98,7 +98,11 @@ public class AiChatService {
                 aiAnswer = response.getAnswer();
             }
         } catch (Exception e) {
-            aiAnswer = "연결이 잠시 원활하지 않습니다. 잠시 후 다시 시도해 주세요.";
+            // 이 로그가 콘솔에 찍히는지 확인하세요!
+            System.err.println("=== Gemini API Error Start ===");
+            e.printStackTrace();
+            System.err.println("=== Gemini API Error End ===");
+            aiAnswer = "연결 실패: " + e.getMessage();
         }
         // AI 답변 DB 저장
         saveMessage(chatRoom, AiChatMessage.MessageType.AI, aiAnswer);
