@@ -2,8 +2,8 @@ package com.talkit.app.domain.user.entity;
 
 import com.talkit.app.domain.community.entity.Comment;
 import com.talkit.app.domain.community.entity.Community;
-import com.talkit.app.domain.like.entity.CommentLike;
-import com.talkit.app.domain.like.entity.CommunityLike;
+import com.talkit.app.domain.community.entity.CommentLike;
+import com.talkit.app.domain.community.entity.CommunityLike;
 import com.talkit.app.global.entity.BaseEntity;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;

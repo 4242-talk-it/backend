@@ -1,6 +1,5 @@
 package com.talkit.app.domain.community.entity;
 
-import com.talkit.app.domain.like.entity.CommunityLike;
 import com.talkit.app.domain.user.entity.User;
 import com.talkit.app.global.entity.BaseEntity;
 import jakarta.persistence.*;

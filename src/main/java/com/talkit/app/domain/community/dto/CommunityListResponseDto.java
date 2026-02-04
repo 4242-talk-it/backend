@@ -1,7 +1,7 @@
 package com.talkit.app.domain.community.dto;
 
 import com.talkit.app.domain.community.entity.Community;
-import com.talkit.app.domain.like.entity.CommunityLike;
+import com.talkit.app.domain.community.entity.CommunityLike;
 import java.util.List;
 import lombok.Builder;
 

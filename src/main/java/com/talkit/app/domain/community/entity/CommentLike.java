@@ -1,6 +1,5 @@
-package com.talkit.app.domain.like.entity;
+package com.talkit.app.domain.community.entity;
 
-import com.talkit.app.domain.community.entity.Community;
 import com.talkit.app.domain.user.entity.User;
 import com.talkit.app.global.entity.BaseEntity;
 import jakarta.persistence.Column;
@@ -20,34 +19,29 @@ import lombok.experimental.SuperBuilder;
 
 @Entity
 @Table(
-    name = "community_like",
+    name = "comment_like",
     uniqueConstraints = {
-        @UniqueConstraint(columnNames = {"user_id", "community_id"})
+        @UniqueConstraint(columnNames = {"user_id", "comment_id"})
     }
 )
 @Getter
 @SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-public class CommunityLike extends BaseEntity {
+public class CommentLike extends BaseEntity {
+
 
     @Id
     @Column(name = "id", nullable = false)
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id; //글 좋아요 식별키
+    private Long id; //댓글 좋아요 식별키
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
     private User user; //사용자 식별키
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "community_id", nullable = false)
-    private Community community; //글 식별키
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "comment_id", nullable = false)
+    private Comment comment; //댓글 식별키
 
-    public static CommunityLike of(User user, Community community) {
-        return CommunityLike.builder()
-            .user(user)
-            .community(community)
-            .build();
-    }
 }
