@@ -15,6 +15,7 @@ import java.time.LocalDateTime;
 public class ChatMessageResponse {
     private Long cmid;
     private String message;
+    private Long senderId;
     private String senderNickname;
     private LocalDateTime timestamp;
 
@@ -22,6 +23,7 @@ public class ChatMessageResponse {
         return ChatMessageResponse.builder()
                 .cmid(message.getCmid())
                 .message(message.getMessage())
+                .senderId(message.getSender().getId())
                 .senderNickname(message.getSender().getNickname())
                 .timestamp(message.getTimestamp())
                 .build();

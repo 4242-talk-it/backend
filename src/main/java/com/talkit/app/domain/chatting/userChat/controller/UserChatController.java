@@ -10,6 +10,10 @@ import com.talkit.app.domain.chatting.userChat.service.UserChatService;
 import com.talkit.app.domain.user.service.UserDetailsImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.handler.annotation.DestinationVariable;
+import org.springframework.messaging.handler.annotation.Header;
+import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,6 +24,7 @@ import java.util.List;
 @RequestMapping ("/api/user-chat")
 public class UserChatController {
     private final UserChatService userChatService;
+    private final SimpMessagingTemplate messagingTemplate;
 
     @PostMapping("/match")
     public ResponseEntity<ChatRoomResponse> match(@RequestBody ChatRoomRequest request,
@@ -27,25 +32,44 @@ public class UserChatController {
 
         ChatRoom room = userChatService.matchOrCreateRoom(request.getTopic(), userDetails.getId());
 
+        boolean isMatched = room.getUser2() != null;
+
+        // [보완] 매칭이 성공했다면, 방에 미리 들어가 있던 user1에게도 소켓으로 알림을 보냅니다.
+        if (isMatched) {
+            messagingTemplate.convertAndSend("/sub/room/" + room.getRoomId(), "MATCH_COMPLETE");
+        }
+
         // 응답 DTO 변환
         ChatRoomResponse response = ChatRoomResponse.builder()
                 .roomId(room.getRoomId())
                 .topic(room.getTopic())
                 .isMatched(room.getUser2() != null) // 상대방(user2)이 있으면 매칭 성공
+                .userId(userDetails.getId())
                 .build();
 
         return ResponseEntity.ok(response);
     }
 
     //메세지 전송
-    @PostMapping("/room/{roomId}/message")
-    public ResponseEntity<ChatMessageResponse> sendMessage(@PathVariable Long roomId,
-                                                   @RequestBody ChatMessageRequest request,
-                                                   @AuthenticationPrincipal UserDetailsImpl userDetails) {
+    @MessageMapping("/room/{roomId}/message")
+    public void sendMessage(@DestinationVariable Long roomId,
+                            ChatMessageRequest request,
+                            @Header("userId") String userId) {
 
-        ChatMessage message = userChatService.sendMessage(roomId, userDetails.getId(), request.getMessage());
+        try {
+            System.out.println("수신 데이터 - roomId: " + roomId + ", userId: " + userId + ", msg: " + request.getMessage());
 
-        return ResponseEntity.ok(ChatMessageResponse.from(message));
+            // String을 Long으로 안전하게 변환
+            Long senderId = Long.parseLong(userId);
+
+            // 서비스 호출
+            ChatMessage message = userChatService.sendMessage(roomId, senderId, request.getMessage());
+
+            // 전송
+            messagingTemplate.convertAndSend("/sub/room/" + roomId, ChatMessageResponse.from(message));
+        } catch (Exception e) {
+            e.printStackTrace(); // 여기서 에러 내용을 정확히 확인 가능합니다.
+        }
     }
 
     //메세지 받기

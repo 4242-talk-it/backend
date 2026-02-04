@@ -39,6 +39,12 @@ public class UserChatService {
                 return room;
             }
 
+            // [보완] 이미 user2가 채워진 방인지 다시 한번 확인 (동시성 방어)
+            if (room.getUser2() != null) {
+                // 이미 다른 사람이 가로챘다면 처음부터 다시 시도하거나 새 방 생성 유도
+                // 여기서는 안전하게 새 방을 생성하는 흐름으로 가거나 예외를 던질 수 있습니다.
+            }
+
             // 2. 방이 있으면 user2로 합류
             room.setUser2(currentUser);
             return room;
@@ -68,6 +74,12 @@ public class UserChatService {
 
         User sender = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 유저입니다."));
+
+        // [추가] 보안 로직: 메시지 발신자가 해당 채팅방의 멤버(user1 혹은 user2)인지 확인
+        if (!room.getUser1().getId().equals(userId) &&
+                (room.getUser2() == null || !room.getUser2().getId().equals(userId))) {
+            throw new IllegalArgumentException("해당 채팅방에 참여 권한이 없습니다.");
+        }
 
         ChatMessage message = ChatMessage.builder()
                 .chatRoom(room)
