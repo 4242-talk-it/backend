@@ -45,10 +45,12 @@ public class CommunityService {
         return CommunityResponseDto.of(community, userId, isLiked, likeCount, commentCount);
     }
 
-    public PageResponseDto<CommunityListResponseDto> pagesByCommunity(Long userId, PageRequestVO pageRequestVO) {
+    public PageResponseDto<CommunityListResponseDto> pagesByCommunity(
+            CommunitySearchConditionDto condition, Long userId, PageRequestVO pageRequestVO
+    ) {
         List<CommunityLike> communityLikes = getCommunityLikesBy(userId);
 
-        return PageResponseDto.of((communityRepository.findAllByOrderByCreatedAtDesc(pageRequestVO.toPageable()))
+        return PageResponseDto.of((communityRepository.searchByCondition(condition, pageRequestVO.toPageable()))
             .map(community -> {
                 int likeCount = communityLikeRepository.countByCommunityId(community.getId());
                 int commentCount = communityCommentRepository.countByCommunityId(community.getId());

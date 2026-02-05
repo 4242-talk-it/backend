@@ -13,7 +13,7 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 @Repository
-public interface CommunityRepository extends JpaRepository<Community, Long> {
+public interface CommunityRepository extends JpaRepository<Community, Long>, CommunityRepositoryCustom {
 
     @EntityGraph(attributePaths = {"user","tags"})
     @Query("SELECT c FROM Community c ORDER BY c.createdAt DESC")

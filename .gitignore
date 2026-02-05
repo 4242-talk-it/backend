@@ -40,6 +40,9 @@ docker-compose.yml
 /nbdist/
 /.nb-gradle/
 
+### QueryDSL ###
+src/main/generated/
+
 ### VS Code ###
 .vscode/
 
