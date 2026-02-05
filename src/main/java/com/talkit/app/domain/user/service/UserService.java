@@ -97,7 +97,6 @@ public class UserService {
         user.withdraw();
     }
 
-    //회원탈퇴 철회
     @Transactional
     public void restoreUser(String email){
         User user=userRepository.findByEmail(email)

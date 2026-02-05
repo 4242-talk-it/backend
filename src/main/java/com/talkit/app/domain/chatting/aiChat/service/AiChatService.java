@@ -64,17 +64,13 @@ public class AiChatService {
         AiChatRoom chatRoom = aiChatRoomRepository.findById(chatRoomId)
                 .orElseThrow(ExceptionType.NOT_FOUND_AI_CHAT_ROOM::of);
 
-        // 권한 없음 예외 발생
         if (!chatRoom.getUser().getId().equals(userId)) {
             throw ExceptionType.FORBIDDEN_ACCESS.of();
         }
 
-        // 기존 메시지 내역 조회 (시간순 정렬)
         List<AiChatMessage> messageHistory = aiChatMessageRepository.findByAiChatRoomOrderByCreatedAtAsc(chatRoom);
-        // 사용자 메시지 먼저 DB 저장
         saveMessage(chatRoom, AiChatMessage.MessageType.USER, userMessage);
 
-        // 프롬프트 생성 (과거 내역 포함)
         StringBuilder promptBuilder = new StringBuilder();
         promptBuilder.append(String.format("너는 '%s' 상황의 상대방이야. 상황 설명: %s. 이전 대화 맥락을 파악해서 자연스럽게 한국어로 대답해줘.\n\n",
                 chatRoom.getAiSituation().getTitle(),
@@ -86,7 +82,6 @@ public class AiChatService {
         }
         promptBuilder.append("사용자: ").append(userMessage).append("\nAI: ");
 
-        // Gemini API 호출
         String aiAnswer;
         try {
             GeminiRequestDto request = GeminiRequestDto.fromText(promptBuilder.toString());
@@ -98,13 +93,11 @@ public class AiChatService {
                 aiAnswer = response.getAnswer();
             }
         } catch (Exception e) {
-            // 이 로그가 콘솔에 찍히는지 확인하세요!
             System.err.println("=== Gemini API Error Start ===");
             e.printStackTrace();
             System.err.println("=== Gemini API Error End ===");
             aiAnswer = "연결 실패: " + e.getMessage();
         }
-        // AI 답변 DB 저장
         saveMessage(chatRoom, AiChatMessage.MessageType.AI, aiAnswer);
 
         return aiAnswer;

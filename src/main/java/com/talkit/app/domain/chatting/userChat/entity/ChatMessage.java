@@ -17,7 +17,7 @@ import java.time.LocalDateTime;
 
 public class ChatMessage {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long cmid; //채팅 식별자
+    private Long cmid;
 
     @ManyToOne
     @JoinColumn(name = "roomId")
@@ -25,10 +25,10 @@ public class ChatMessage {
 
     @ManyToOne
     @JoinColumn(name = "senderUid")
-    private User sender; //메세지를 보낸 사용자
+    private User sender;
 
     @Column(columnDefinition = "TEXT")
-    private String message; //메세지 내용
+    private String message;
     private LocalDateTime timestamp;
-    private boolean isRead; //읽음여부
+    private boolean isRead;
 }

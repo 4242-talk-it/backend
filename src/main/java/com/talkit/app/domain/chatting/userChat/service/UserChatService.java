@@ -65,9 +65,7 @@ public class UserChatService {
         return chatMessageRepository.findByChatRoomOrderByTimestampAsc(room);
     }
 
-    /**
-     * 메시지 전송
-     */
+
     public ChatMessage sendMessage(Long roomId, Long userId, String content) {
         ChatRoom room = chatRoomRepository.findById(roomId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 방입니다."));
@@ -75,7 +73,6 @@ public class UserChatService {
         User sender = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 유저입니다."));
 
-        // [추가] 보안 로직: 메시지 발신자가 해당 채팅방의 멤버(user1 혹은 user2)인지 확인
         if (!room.getUser1().getId().equals(userId) &&
                 (room.getUser2() == null || !room.getUser2().getId().equals(userId))) {
             throw new IllegalArgumentException("해당 채팅방에 참여 권한이 없습니다.");

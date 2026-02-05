@@ -1,7 +1,7 @@
 package com.talkit.app.domain.community.dto;
 
 import com.talkit.app.domain.community.entity.Community;
-import com.talkit.app.domain.like.entity.CommunityLike;
+import com.talkit.app.domain.community.entity.CommunityLike;
 import java.util.List;
 import lombok.Builder;
 
@@ -37,14 +37,11 @@ public record CommunityListResponseDto(
         int commentCount,
         List<CommunityLike> communityLikesByUserId) {
 
-        // 1. 기초 정보 생성
         CommunityListResponseDto base = from(community);
 
-        // 2. 추가 정보(좋아요 여부) 계산
         boolean isLiked = communityLikesByUserId.stream()
             .anyMatch(like -> community.getId().equals(like.getCommunity().getId()));
 
-        // 3. 전체 조립
         return CommunityListResponseDto.builder()
             .id(base.id())
             .title(base.title())
@@ -55,17 +52,16 @@ public record CommunityListResponseDto(
             .viewCount(base.viewCount())
             .likeCount(likeCount)
             .commentCount(commentCount)
-            .isLiked(isLiked) // 미리 계산한 변수 사용
+            .isLiked(isLiked)
             .build();
     }
 
     private static String getPreviewContent(String content, int maxLength) {
-        // null 체크 및 빈 문자열 처리 추가
         if (content == null || content.isBlank()) {
             return "";
         }
         if (content.length() > maxLength) {
-            return content.substring(0, maxLength) + "..."; // 줄임표(...)를 넣어주면 UX에 좋습니다.
+            return content.substring(0, maxLength) + "...";
         }
         return content;
     }

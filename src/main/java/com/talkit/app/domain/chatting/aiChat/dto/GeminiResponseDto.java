@@ -21,7 +21,6 @@ public record GeminiResponseDto(List<Candidate> candidates) {
             String text
     ) {}
 
-    // 응답 결과물에서 AI의 답변 텍스트만 추출
     public String getAnswer() {
         if (candidates == null || candidates.isEmpty()) return "";
 

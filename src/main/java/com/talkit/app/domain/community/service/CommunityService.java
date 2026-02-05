@@ -8,8 +8,8 @@ import com.talkit.app.domain.community.dto.*;
 import com.talkit.app.domain.community.entity.Community;
 import com.talkit.app.domain.community.repository.CommunityCommentRepository;
 import com.talkit.app.domain.community.repository.CommunityRepository;
-import com.talkit.app.domain.like.entity.CommunityLike;
-import com.talkit.app.domain.like.repository.CommunityLikeRepository;
+import com.talkit.app.domain.community.entity.CommunityLike;
+import com.talkit.app.domain.community.repository.CommunityLikeRepository;
 import com.talkit.app.domain.user.entity.User;
 import com.talkit.app.domain.user.repository.UserRepository;
 import com.talkit.app.global.dto.PageRequestVO;
@@ -45,10 +45,12 @@ public class CommunityService {
         return CommunityResponseDto.of(community, userId, isLiked, likeCount, commentCount);
     }
 
-    public PageResponseDto<CommunityListResponseDto> pagesByCommunity(Long userId, PageRequestVO pageRequestVO) {
+    public PageResponseDto<CommunityListResponseDto> pagesByCommunity(
+            CommunitySearchConditionDto condition, Long userId, PageRequestVO pageRequestVO
+    ) {
         List<CommunityLike> communityLikes = getCommunityLikesBy(userId);
 
-        return PageResponseDto.of((communityRepository.findAllByOrderByCreatedAtDesc(pageRequestVO.toPageable()))
+        return PageResponseDto.of((communityRepository.searchByCondition(condition, pageRequestVO.toPageable()))
             .map(community -> {
                 int likeCount = communityLikeRepository.countByCommunityId(community.getId());
                 int commentCount = communityCommentRepository.countByCommunityId(community.getId());

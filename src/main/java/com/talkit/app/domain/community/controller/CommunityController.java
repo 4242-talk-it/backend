@@ -3,6 +3,7 @@ package com.talkit.app.domain.community.controller;
 import com.talkit.app.domain.community.dto.CommunityListResponseDto;
 import com.talkit.app.domain.community.dto.CommunityRequestDto;
 import com.talkit.app.domain.community.dto.CommunityResponseDto;
+import com.talkit.app.domain.community.dto.CommunitySearchConditionDto;
 import com.talkit.app.domain.community.service.CommunityService;
 import com.talkit.app.global.auth.AuthenticatedUser;
 import com.talkit.app.global.auth.AuthenticationHolder;
@@ -32,9 +33,11 @@ public class CommunityController {
 
     @Operation(summary = "게시물 목록 조회")
     @GetMapping("/list")
-    public ResponseDto<PageResponseDto<CommunityListResponseDto>> list(PageRequestVO pageRequestVO) {
+    public ResponseDto<PageResponseDto<CommunityListResponseDto>> list(
+            CommunitySearchConditionDto condition, PageRequestVO pageRequestVO
+    ) {
         Long userId = AuthenticationHolder.getCurrentUserId();
-        return ResponseDto.of(communityService.pagesByCommunity(userId, pageRequestVO));
+        return ResponseDto.of(communityService.pagesByCommunity(condition, userId, pageRequestVO));
     }
 
     @Operation(summary = "수정 페이지용 게시물 조회")
