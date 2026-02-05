@@ -34,16 +34,14 @@ public class UserChatController {
 
         boolean isMatched = room.getUser2() != null;
 
-        // [보완] 매칭이 성공했다면, 방에 미리 들어가 있던 user1에게도 소켓으로 알림을 보냅니다.
         if (isMatched) {
             messagingTemplate.convertAndSend("/sub/room/" + room.getRoomId(), "MATCH_COMPLETE");
         }
 
-        // 응답 DTO 변환
         ChatRoomResponse response = ChatRoomResponse.builder()
                 .roomId(room.getRoomId())
                 .topic(room.getTopic())
-                .isMatched(room.getUser2() != null) // 상대방(user2)이 있으면 매칭 성공
+                .isMatched(room.getUser2() != null)
                 .userId(userDetails.getId())
                 .build();
 
@@ -59,16 +57,13 @@ public class UserChatController {
         try {
             System.out.println("수신 데이터 - roomId: " + roomId + ", userId: " + userId + ", msg: " + request.getMessage());
 
-            // String을 Long으로 안전하게 변환
             Long senderId = Long.parseLong(userId);
 
-            // 서비스 호출
             ChatMessage message = userChatService.sendMessage(roomId, senderId, request.getMessage());
 
-            // 전송
             messagingTemplate.convertAndSend("/sub/room/" + roomId, ChatMessageResponse.from(message));
         } catch (Exception e) {
-            e.printStackTrace(); // 여기서 에러 내용을 정확히 확인 가능합니다.
+            e.printStackTrace();
         }
     }
 

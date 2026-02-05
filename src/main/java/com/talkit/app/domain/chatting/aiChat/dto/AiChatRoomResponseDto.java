@@ -33,7 +33,6 @@ public record AiChatRoomResponseDto(
             String content,
             LocalDateTime createdAt
     ) {
-        // 메시지 엔티티를 상세 DTO로 변환
         public static ChatMessageDetail from(AiChatMessage message) {
             return ChatMessageDetail.builder()
                     .type(message.getType().name())

@@ -22,7 +22,7 @@ public class CommunityRepositoryImpl implements CommunityRepositoryCustom{
     public Page<Community> searchByCondition(CommunitySearchConditionDto condition, Pageable pageable) {
         List<Community> content = queryFactory
                 .selectFrom(community)
-                .leftJoin(community.user, user).fetchJoin()// 유저 정보 한방에 가져오기
+                .leftJoin(community.user, user).fetchJoin()
                 .leftJoin(community.tags).fetchJoin()
                 .where(searchEq(condition.searchType(), condition.keyword()))
                 .orderBy(community.createdAt.desc())
@@ -45,7 +45,7 @@ public class CommunityRepositoryImpl implements CommunityRepositoryCustom{
         return switch (searchType) {
             case "TITLE" -> community.title.containsIgnoreCase(keyword);
             case "CONTENT" -> community.content.containsIgnoreCase(keyword);
-            case "TAG" -> community.tags.any().containsIgnoreCase(keyword); // 태그 리스트 내 검색
+            case "TAG" -> community.tags.any().containsIgnoreCase(keyword);
             case "WRITER" -> community.user.nickname.containsIgnoreCase(keyword);
             default -> null;
         };

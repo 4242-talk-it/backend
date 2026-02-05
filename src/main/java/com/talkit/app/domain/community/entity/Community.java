@@ -51,14 +51,13 @@ public class Community extends BaseEntity {
     @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "community_tags", joinColumns = @JoinColumn(name = "community_id"))
     @Column(name = "tag_name")
-    @Builder.Default // Builder 사용 시 리스트 초기화 보장
+    @Builder.Default
     private List<String> tags = new ArrayList<>();
 
     public void incrementViewCount() {
         this.viewCount++;
     }
 
-    // 생성 메서드 수정
     public static Community of(User user, String title, String content, String category, List<String> tags) {
         return Community.builder()
                 .user(user)
@@ -75,9 +74,9 @@ public class Community extends BaseEntity {
         this.content = content;
         this.category = category;
 
-        this.tags.clear(); // 기존 태그 삭제
+        this.tags.clear();
         if (tags != null) {
-            this.tags.addAll(tags); // 새로운 태그 추가
+            this.tags.addAll(tags);
         }
     }
 
