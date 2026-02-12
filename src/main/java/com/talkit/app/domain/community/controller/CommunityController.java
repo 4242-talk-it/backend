@@ -1,9 +1,6 @@
 package com.talkit.app.domain.community.controller;
 
-import com.talkit.app.domain.community.dto.CommunityListResponseDto;
-import com.talkit.app.domain.community.dto.CommunityRequestDto;
-import com.talkit.app.domain.community.dto.CommunityResponseDto;
-import com.talkit.app.domain.community.dto.CommunitySearchConditionDto;
+import com.talkit.app.domain.community.dto.*;
 import com.talkit.app.domain.community.service.CommunityService;
 import com.talkit.app.global.auth.AuthenticatedUser;
 import com.talkit.app.global.auth.AuthenticationHolder;
@@ -74,6 +71,12 @@ public class CommunityController {
         Long userId = AuthenticationHolder.getCurrentUserId();
         communityService.deleteCommunity(id, userId);
         return ResponseDto.of(null, "게시물이 성공적으로 삭제되었습니다.");
+    }
+
+    @Operation(summary = "커뮤니티 통계 조회", description = "메인 상단 Hero Section에 표시될 게시글, 댓글, 활동멤버 수를 조회합니다.")
+    @GetMapping("/stats")
+    public ResponseDto<CommunityStatsResponseDto> getCommunityStats() {
+        return ResponseDto.of(communityService.getCommunityStats());
     }
 
 }
