@@ -38,6 +38,13 @@ dependencies {
 	annotationProcessor "jakarta.annotation:jakarta.annotation-api"
 	annotationProcessor "jakarta.persistence:jakarta.persistence-api"
 
+	// Retry (AI API 재시도 로직용)
+	implementation 'org.springframework.retry:spring-retry'
+	implementation 'org.springframework:spring-aspects'
+
+	//WebSocket
+	implementation 'org.springframework.boot:spring-boot-starter-websocket'
+
 	// Springdoc(Swagger-UI)
 	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0'
 
@@ -53,7 +60,6 @@ dependencies {
 	implementation 'io.jsonwebtoken:jjwt-impl:0.11.5'
 	implementation 'io.jsonwebtoken:jjwt-jackson:0.11.5'
 
-
 	// External Libraries
 	implementation 'io.github.cdimascio:dotenv-java:3.0.0'
 	compileOnly 'org.projectlombok:lombok'
@@ -62,9 +68,6 @@ dependencies {
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.security:spring-security-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-
-    //WebSocket
-    implementation 'org.springframework.boot:spring-boot-starter-websocket'
 
 }
 
