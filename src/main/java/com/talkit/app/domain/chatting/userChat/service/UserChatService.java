@@ -1,5 +1,7 @@
 package com.talkit.app.domain.chatting.userChat.service;
 
+import com.talkit.app.domain.chatting.userChat.dto.ChatRoomResponse;
+import com.talkit.app.domain.chatting.userChat.dto.MyChatRoomResponse;
 import com.talkit.app.domain.chatting.userChat.entity.ChatMessage;
 import com.talkit.app.domain.chatting.userChat.entity.ChatRoom;
 import com.talkit.app.domain.chatting.userChat.repository.ChatMessageRepository;
@@ -7,12 +9,15 @@ import com.talkit.app.domain.chatting.userChat.repository.ChatRoomRepository;
 import com.talkit.app.domain.user.entity.User;
 import com.talkit.app.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -21,42 +26,68 @@ public class UserChatService {
     private final ChatRoomRepository chatRoomRepository;
     private final ChatMessageRepository chatMessageRepository;
     private final UserRepository userRepository;
+    private final SimpMessagingTemplate messagingTemplate;
 
+    //참여 가능한 채팅방 불러오기
+    public List<String> getAvailableTopics() {
+        return chatRoomRepository.findAvailableTopics();
+    }
     //주제별 채팅방 생성 및 매칭
-    public ChatRoom matchOrCreateRoom(String topic, Long userId) {
+    public ChatRoomResponse matchOrCreateRoom(String topic, Long userId) {
 
         User currentUser = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 유저입니다."));
 
-        // 1. 해당 주제로 대기 중인 방(user2가 비어있는 방)이 있는지 조회
-        Optional<ChatRoom> existingRoom = chatRoomRepository.findFirstByTopicAndUser2IsNullOrderByCreatedAtAsc(topic);
+        //본인이 참여중이면서 종료되지 않은 대화방
+        Optional<ChatRoom> ongoingRoom = chatRoomRepository.findFirstByTopicAndIsOveredFalseAndUser1OrUser2(topic, currentUser);
 
+        if (ongoingRoom.isPresent()) {
+            return ChatRoomResponse.from(ongoingRoom.get(), userId);
+        }
+
+        //해당 토픽으로 대기 중 대화방
+        Optional<ChatRoom> existingRoom = chatRoomRepository.findFirstByTopicAndUser1NotAndUser2IsNullAndIsOveredFalseOrderByCreatedAtAsc(topic, currentUser);
+
+        ChatRoom room;
         if (existingRoom.isPresent()) {
-            ChatRoom room = existingRoom.get();
-
-            // 본인이 만든 방에 다시 들어가는 것 방지
-            if (room.getUser1().getId().equals(currentUser.getId())) {
-                return room;
-            }
-
-            // [보완] 이미 user2가 채워진 방인지 다시 한번 확인 (동시성 방어)
-            if (room.getUser2() != null) {
-                // 이미 다른 사람이 가로챘다면 처음부터 다시 시도하거나 새 방 생성 유도
-                // 여기서는 안전하게 새 방을 생성하는 흐름으로 가거나 예외를 던질 수 있습니다.
-            }
-
-            // 2. 방이 있으면 user2로 합류
+            room = existingRoom.get();
             room.setUser2(currentUser);
-            return room;
+            messagingTemplate.convertAndSend("/sub/room/" + room.getRoomId(), "MATCH_COMPLETE");
         } else {
-            // 3. 방이 없으면 새로 생성하여 user1에 할당
             ChatRoom newRoom = ChatRoom.builder()
                     .topic(topic)
                     .user1(currentUser)
+                    .user2(null)
+                    .isOvered(false)
                     .createdAt(LocalDateTime.now())
                     .build();
-            return chatRoomRepository.save(newRoom);
+            room=chatRoomRepository.save(newRoom);
         }
+        return ChatRoomResponse.from(room,userId);
+    }
+
+    public List<MyChatRoomResponse> getMyChatRooms(Long userId) {
+        List<ChatRoom> rooms = chatRoomRepository.findMyActiveRooms(userId);
+
+        return rooms.stream().map(room -> {
+            String lastMsg = room.getLastMessage(); // DB에 마지막 메시지를 저장하는 컬럼이 있다고 가정
+            if (lastMsg != null && lastMsg.length() > 20) {
+                lastMsg = lastMsg.substring(0, 20) + "..."; // 20자 이상이면 생략
+            }
+
+            return new MyChatRoomResponse(
+                    room.getRoomId(),
+                    room.getTopic(),
+                    lastMsg != null ? lastMsg : "대화를 시작해보세요!",
+                    formatTime(room.getUpdatedAt()), // 시간 포맷팅 유틸 함수 사용
+                    userId
+            );
+        }).collect(Collectors.toList());
+    }
+
+    private String formatTime(LocalDateTime time) {
+        if (time == null) return "";
+        return time.format(DateTimeFormatter.ofPattern("a hh:mm"));
     }
 
     public List<ChatMessage> getChatHistory(Long roomId) {
@@ -65,19 +96,40 @@ public class UserChatService {
         return chatMessageRepository.findByChatRoomOrderByTimestampAsc(room);
     }
 
-    /**
-     * 메시지 전송
-     */
+    //메세지 전송
     public ChatMessage sendMessage(Long roomId, Long userId, String content) {
         ChatRoom room = chatRoomRepository.findById(roomId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 방입니다."));
+
+        //전체 메세지 수 체크 (40개 제한)
+        long totalMessages = chatMessageRepository.countByChatRoom(room);
+        if (room.isOvered() || totalMessages >= 40) {
+            if (!room.isOvered()) {
+                room.setOvered(true); // 혹시 안 바뀌어있다면 여기서 변경
+            }
+            throw new IllegalStateException("최대 대화 횟수에 도달했습니다.");
+        }
+
+        // 2. 연속 전송 제한 체크 (최근 3개 메시지 조회)
+        // Pageable을 사용하여 최신 3개만 가져오는 로직 필요
+        List<ChatMessage> lastMessages = chatMessageRepository.findTop3ByChatRoomOrderByTimestampDesc(room);
+        long continuousCount = lastMessages.stream()
+                .filter(m -> m.getSender().getId().equals(userId))
+                .count();
+
+        if (continuousCount >= 3) {
+            throw new IllegalStateException("상대방의 답변을 기다려야 합니다.");
+        }
+
+        if(room.getUser2() == null) {
+            throw new IllegalArgumentException("아직 상대 매칭이 되지 않았습니다.");
+        }
 
         User sender = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 유저입니다."));
 
         // [추가] 보안 로직: 메시지 발신자가 해당 채팅방의 멤버(user1 혹은 user2)인지 확인
-        if (!room.getUser1().getId().equals(userId) &&
-                (room.getUser2() == null || !room.getUser2().getId().equals(userId))) {
+        if (!room.getUser1().getId().equals(userId) && !room.getUser2().getId().equals(userId)) {
             throw new IllegalArgumentException("해당 채팅방에 참여 권한이 없습니다.");
         }
 
@@ -88,7 +140,17 @@ public class UserChatService {
                 .timestamp(LocalDateTime.now())
                 .isRead(false)
                 .build();
+        ChatMessage saved = chatMessageRepository.save(message);
+        if (totalMessages + 1 >= 40) {
+            room.setOvered(true);
 
-        return chatMessageRepository.save(message);
+            java.util.Map<String, Object> endSignal = new java.util.HashMap<>();
+            endSignal.put("type", "CHAT_END");
+            endSignal.put("roomId", roomId);
+
+            messagingTemplate.convertAndSend("/sub/room/" + roomId, endSignal);
+        }
+        room.updateLastMessage(content);
+        return saved;
     }
 }

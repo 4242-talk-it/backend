@@ -28,6 +28,13 @@ public class ChatRoom {
     @JoinColumn(name = "user2_uid")
     private User user2; // 나중에 매칭된 사람
 
-    private boolean isMatched; // 매칭 성공 여부
+    private boolean isOvered; // 대화 종료 여부
     private LocalDateTime createdAt; //채팅방 생성 일시
+    private String lastMessage;
+    private LocalDateTime updatedAt;
+
+    public void updateLastMessage(String content) {
+        this.lastMessage = content;
+        this.updatedAt = LocalDateTime.now();
+    }
 }

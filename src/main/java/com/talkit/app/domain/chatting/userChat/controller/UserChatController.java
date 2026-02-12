@@ -1,9 +1,6 @@
 package com.talkit.app.domain.chatting.userChat.controller;
 
-import com.talkit.app.domain.chatting.userChat.dto.ChatMessageRequest;
-import com.talkit.app.domain.chatting.userChat.dto.ChatMessageResponse;
-import com.talkit.app.domain.chatting.userChat.dto.ChatRoomRequest;
-import com.talkit.app.domain.chatting.userChat.dto.ChatRoomResponse;
+import com.talkit.app.domain.chatting.userChat.dto.*;
 import com.talkit.app.domain.chatting.userChat.entity.ChatMessage;
 import com.talkit.app.domain.chatting.userChat.entity.ChatRoom;
 import com.talkit.app.domain.chatting.userChat.service.UserChatService;
@@ -26,26 +23,24 @@ public class UserChatController {
     private final UserChatService userChatService;
     private final SimpMessagingTemplate messagingTemplate;
 
+    @GetMapping("/topics")
+    public ResponseEntity<List<String>> getAvailableTopics() {
+        List<String> topics = userChatService.getAvailableTopics();
+        return ResponseEntity.ok(topics);
+    }
+
+    @GetMapping("/my-rooms")
+    public ResponseEntity<List<MyChatRoomResponse>> getMyRooms(@AuthenticationPrincipal UserDetailsImpl userDetails) {
+        // 인증된 객체(userDetails)에서 내 ID를 꺼내 서비스에 전달합니다.
+        List<MyChatRoomResponse> response = userChatService.getMyChatRooms(userDetails.getId());
+        return ResponseEntity.ok(response);
+    }
+
     @PostMapping("/match")
     public ResponseEntity<ChatRoomResponse> match(@RequestBody ChatRoomRequest request,
                                                   @AuthenticationPrincipal UserDetailsImpl userDetails) {
 
-        ChatRoom room = userChatService.matchOrCreateRoom(request.getTopic(), userDetails.getId());
-
-        boolean isMatched = room.getUser2() != null;
-
-        // [보완] 매칭이 성공했다면, 방에 미리 들어가 있던 user1에게도 소켓으로 알림을 보냅니다.
-        if (isMatched) {
-            messagingTemplate.convertAndSend("/sub/room/" + room.getRoomId(), "MATCH_COMPLETE");
-        }
-
-        // 응답 DTO 변환
-        ChatRoomResponse response = ChatRoomResponse.builder()
-                .roomId(room.getRoomId())
-                .topic(room.getTopic())
-                .isMatched(room.getUser2() != null) // 상대방(user2)이 있으면 매칭 성공
-                .userId(userDetails.getId())
-                .build();
+        ChatRoomResponse response = userChatService.matchOrCreateRoom(request.getTopic(), userDetails.getId());
 
         return ResponseEntity.ok(response);
     }
@@ -58,8 +53,6 @@ public class UserChatController {
 
         try {
             System.out.println("수신 데이터 - roomId: " + roomId + ", userId: " + userId + ", msg: " + request.getMessage());
-
-            // String을 Long으로 안전하게 변환
             Long senderId = Long.parseLong(userId);
 
             // 서비스 호출
