@@ -55,13 +55,11 @@ public class UserChatController {
             System.out.println("수신 데이터 - roomId: " + roomId + ", userId: " + userId + ", msg: " + request.getMessage());
             Long senderId = Long.parseLong(userId);
 
-            // 서비스 호출
             ChatMessage message = userChatService.sendMessage(roomId, senderId, request.getMessage());
 
-            // 전송
             messagingTemplate.convertAndSend("/sub/room/" + roomId, ChatMessageResponse.from(message));
         } catch (Exception e) {
-            e.printStackTrace(); // 여기서 에러 내용을 정확히 확인 가능합니다.
+            e.printStackTrace();
         }
     }
 

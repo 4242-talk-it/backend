@@ -1,7 +1,7 @@
-package com.talkit.app.domain.like.controller;
+package com.talkit.app.domain.community.controller;
 
-import com.talkit.app.domain.like.dto.CommunityLikeResponseDto;
-import com.talkit.app.domain.like.service.CommunityLikeService;
+import com.talkit.app.domain.community.dto.CommunityLikeResponseDto;
+import com.talkit.app.domain.community.service.CommunityLikeService;
 import com.talkit.app.global.auth.AuthenticatedUser;
 import com.talkit.app.global.auth.AuthenticationHolder;
 import com.talkit.app.global.dto.ResponseDto;

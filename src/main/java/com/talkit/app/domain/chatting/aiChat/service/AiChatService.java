@@ -16,8 +16,11 @@ import com.talkit.app.global.exception.ExceptionType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Pageable;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
@@ -54,6 +57,10 @@ public class AiChatService {
                 .build();
 
         aiChatRoomRepository.save(aiChatRoom);
+
+        String firstGreeting = generateInitialGreeting(aiChatRoom);
+        saveMessage(aiChatRoom, AiChatMessage.MessageType.AI, firstGreeting);
+
         return AiChatRoomResponseDto.of(aiChatRoom);
     }
 
@@ -64,17 +71,14 @@ public class AiChatService {
         AiChatRoom chatRoom = aiChatRoomRepository.findById(chatRoomId)
                 .orElseThrow(ExceptionType.NOT_FOUND_AI_CHAT_ROOM::of);
 
-        // 권한 없음 예외 발생
         if (!chatRoom.getUser().getId().equals(userId)) {
             throw ExceptionType.FORBIDDEN_ACCESS.of();
         }
 
-        // 기존 메시지 내역 조회 (시간순 정렬)
-        List<AiChatMessage> messageHistory = aiChatMessageRepository.findByAiChatRoomOrderByCreatedAtAsc(chatRoom);
-        // 사용자 메시지 먼저 DB 저장
         saveMessage(chatRoom, AiChatMessage.MessageType.USER, userMessage);
 
-        // 프롬프트 생성 (과거 내역 포함)
+        List<AiChatMessage> messageHistory = aiChatMessageRepository.findByAiChatRoomOrderByCreatedAtAsc(chatRoom);
+
         StringBuilder promptBuilder = new StringBuilder();
         promptBuilder.append(String.format("너는 '%s' 상황의 상대방이야. 상황 설명: %s. 이전 대화 맥락을 파악해서 자연스럽게 한국어로 대답해줘.\n\n",
                 chatRoom.getAiSituation().getTitle(),
@@ -84,31 +88,36 @@ public class AiChatService {
             String role = (msg.getType() == AiChatMessage.MessageType.USER) ? "사용자" : "AI";
             promptBuilder.append(role).append(": ").append(msg.getContent()).append("\n");
         }
-        promptBuilder.append("사용자: ").append(userMessage).append("\nAI: ");
+        promptBuilder.append("\nAI: ");
 
-        // Gemini API 호출
-        String aiAnswer;
-        try {
-            GeminiRequestDto request = GeminiRequestDto.fromText(promptBuilder.toString());
-            GeminiResponseDto response = restTemplate.postForObject(apiUrl + "?key=" + apiKey, request, GeminiResponseDto.class);
-
-            if (response == null || response.getAnswer() == null || response.getAnswer().isBlank()) {
-                aiAnswer = "죄송해요, 잠시 대화가 어려워요. 다시 말씀해 주시겠어요?";
-            } else {
-                aiAnswer = response.getAnswer();
-            }
-        } catch (Exception e) {
-            // 이 로그가 콘솔에 찍히는지 확인하세요!
-            System.err.println("=== Gemini API Error Start ===");
-            e.printStackTrace();
-            System.err.println("=== Gemini API Error End ===");
-            aiAnswer = "연결 실패: " + e.getMessage();
-        }
-        // AI 답변 DB 저장
+        String aiAnswer = callGemini(promptBuilder.toString());
         saveMessage(chatRoom, AiChatMessage.MessageType.AI, aiAnswer);
 
         return aiAnswer;
     }
+
+    @Retryable(
+            retryFor = { HttpServerErrorException.ServiceUnavailable.class },
+            maxAttempts = 3, backoff = @Backoff(delay = 2000)
+    )
+    public String callGemini(String prompt) {
+        try {
+            GeminiRequestDto request = GeminiRequestDto.fromText(prompt);
+            GeminiResponseDto response = restTemplate.postForObject(apiUrl + "?key=" + apiKey, request, GeminiResponseDto.class);
+
+            if (response == null || response.getAnswer() == null || response.getAnswer().isBlank()) {
+                return "음... 잠시 생각을 정리 중이에요. 다시 말씀해 주시겠어요?";
+            }
+            return response.getAnswer();
+        } catch (HttpServerErrorException.ServiceUnavailable e) {
+            // 503 에러는 다시 throw하여 @Retryable이 작동하게 함
+            throw e;
+        } catch (Exception e) {
+            // 그 외의 일반 에러 처리
+            return "연결 실패: " + e.getMessage();
+        }
+    }
+
 
     @Transactional(readOnly = true)
     public List<AiChatRoomResponseDto> getMyAiChatRoom(Long userId, Pageable pageable) {
@@ -128,5 +137,17 @@ public class AiChatService {
 
         aiChatMessageRepository.save(message);
     }
+
+    private String generateInitialGreeting(AiChatRoom aiChatRoom) {
+        String prompt = String.format(
+                "너는 '%s'의 상대방이야. 상황 설명: '%s'." +
+                        "이 상황에 맞춰서 사용자에게 먼저 첫 인사를 건네줘." +
+                        "자연스럽게 대화를 시작할 수 있도록 한국어로 한 문장 혹은 두 문장으로 대화를 시작해줘.",
+                aiChatRoom.getAiSituation().getTitle(),
+                aiChatRoom.getAiSituation().getDescription()
+        );
+        return callGemini(prompt);
+    }
+
 
 }

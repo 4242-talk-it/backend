@@ -8,8 +8,8 @@ import com.talkit.app.domain.community.dto.*;
 import com.talkit.app.domain.community.entity.Community;
 import com.talkit.app.domain.community.repository.CommunityCommentRepository;
 import com.talkit.app.domain.community.repository.CommunityRepository;
-import com.talkit.app.domain.like.entity.CommunityLike;
-import com.talkit.app.domain.like.repository.CommunityLikeRepository;
+import com.talkit.app.domain.community.entity.CommunityLike;
+import com.talkit.app.domain.community.repository.CommunityLikeRepository;
 import com.talkit.app.domain.user.entity.User;
 import com.talkit.app.domain.user.repository.UserRepository;
 import com.talkit.app.global.dto.PageRequestVO;
@@ -45,18 +45,6 @@ public class CommunityService {
         return CommunityResponseDto.of(community, userId, isLiked, likeCount, commentCount);
     }
 
-    public PageResponseDto<CommunityListResponseDto> pagesByCommunity(Long userId, PageRequestVO pageRequestVO) {
-        List<CommunityLike> communityLikes = getCommunityLikesBy(userId);
-
-        return PageResponseDto.of((communityRepository.findAllByOrderByCreatedAtDesc(pageRequestVO.toPageable()))
-            .map(community -> {
-                int likeCount = communityLikeRepository.countByCommunityId(community.getId());
-                int commentCount = communityCommentRepository.countByCommunityId(community.getId());
-                return CommunityListResponseDto.of(community, likeCount, commentCount, communityLikes);
-            })
-        );
-    }
-
     @Transactional
     public CommunityResponseDto createCommunity(CommunityRequestDto requestDto, Long userId) {
         User user = userRepository.findById(userId)
@@ -75,7 +63,6 @@ public class CommunityService {
         return CommunityResponseDto.of(community, userId);
     }
 
-
     @Transactional
     public CommunityResponseDto updateCommunity(Long id, CommunityRequestDto requestDto, Long userId) {
         Community community = getCommunity(id);
@@ -90,6 +77,30 @@ public class CommunityService {
         );
 
         return CommunityResponseDto.of(community, userId);
+    }
+
+    @Transactional(readOnly = true)
+    public CommunityStatsResponseDto getCommunityStats() {
+        long totalPosts = communityRepository.count();
+        long totalComments = communityCommentRepository.count();
+        long activeMembers = userRepository.countActiveMembers();
+
+        return CommunityStatsResponseDto.of(totalPosts, totalComments, activeMembers);
+    }
+
+
+    public PageResponseDto<CommunityListResponseDto> pagesByCommunity(
+            CommunitySearchConditionDto condition, Long userId, PageRequestVO pageRequestVO
+    ) {
+        List<CommunityLike> communityLikes = getCommunityLikesBy(userId);
+
+        return PageResponseDto.of((communityRepository.searchByCondition(condition, pageRequestVO.toPageable()))
+                .map(community -> {
+                    int likeCount = communityLikeRepository.countByCommunityId(community.getId());
+                    int commentCount = communityCommentRepository.countByCommunityId(community.getId());
+                    return CommunityListResponseDto.of(community, likeCount, commentCount, communityLikes);
+                })
+        );
     }
 
     public CommunityResponseDto getPostForEdit(Long id, Long userId) {

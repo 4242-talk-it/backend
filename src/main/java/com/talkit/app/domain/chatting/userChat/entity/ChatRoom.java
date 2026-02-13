@@ -16,17 +16,17 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class ChatRoom {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long roomId; //채팅방 식별자
+    private Long roomId;
 
-    private String topic; // 사용자가 고른 주제
+    private String topic;
 
     @ManyToOne
     @JoinColumn(name = "user1_uid")
-    private User user1; // 먼저 들어와서 기다린 사람
+    private User user1;
 
     @ManyToOne
     @JoinColumn(name = "user2_uid")
-    private User user2; // 나중에 매칭된 사람
+    private User user2;
 
     private boolean isOvered; // 대화 종료 여부
     private LocalDateTime createdAt; //채팅방 생성 일시

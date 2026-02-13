@@ -1,7 +1,7 @@
-package com.talkit.app.domain.like.repository;
+package com.talkit.app.domain.community.repository;
 
 import com.talkit.app.domain.community.entity.Community;
-import com.talkit.app.domain.like.entity.CommunityLike;
+import com.talkit.app.domain.community.entity.CommunityLike;
 import com.talkit.app.domain.user.entity.User;
 import java.util.List;
 import java.util.Optional;

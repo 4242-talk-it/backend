@@ -4,7 +4,6 @@ import com.talkit.app.domain.user.entity.User;
 import java.util.Collection;
 import java.util.List;
 
-import com.talkit.app.domain.user.entity.User;
 import lombok.Builder;
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
@@ -32,7 +31,6 @@ public class UserDetailsImpl implements UserDetails {
                 .id(user.getId())
                 .email(user.getEmail())
                 .password(user.getPassword())
-                // 권한이 엔티티에 있다면 가져오고, 없다면 기본 권한 부여
                 .authorities(List.of(new SimpleGrantedAuthority("ROLE_USER")))
                 .build();
     }

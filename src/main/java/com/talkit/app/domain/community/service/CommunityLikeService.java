@@ -1,13 +1,10 @@
-package com.talkit.app.domain.like.service;
+package com.talkit.app.domain.community.service;
 
 import com.talkit.app.domain.community.entity.Community;
-import com.talkit.app.domain.community.repository.CommunityRepository;
-import com.talkit.app.domain.community.service.CommunityService;
-import com.talkit.app.domain.like.dto.CommunityLikeResponseDto;
-import com.talkit.app.domain.like.entity.CommunityLike;
-import com.talkit.app.domain.like.repository.CommunityLikeRepository;
+import com.talkit.app.domain.community.dto.CommunityLikeResponseDto;
+import com.talkit.app.domain.community.entity.CommunityLike;
+import com.talkit.app.domain.community.repository.CommunityLikeRepository;
 import com.talkit.app.domain.user.entity.User;
-import com.talkit.app.domain.user.repository.UserRepository;
 import com.talkit.app.domain.user.service.UserService;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;

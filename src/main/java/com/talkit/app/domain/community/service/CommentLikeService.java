@@ -1,4 +1,4 @@
-package com.talkit.app.domain.like.service;
+package com.talkit.app.domain.community.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

@@ -15,7 +15,6 @@ public class UserResponseDto {
     private String birthYear;
     private String gender;
 
-    // 엔티티를 DTO로 변환하는 정적 메서드
     public static UserResponseDto from(User user) {
         return UserResponseDto.builder()
             .id(user.getId())

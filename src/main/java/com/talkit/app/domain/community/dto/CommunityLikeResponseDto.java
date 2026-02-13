@@ -1,4 +1,4 @@
-package com.talkit.app.domain.like.dto;
+package com.talkit.app.domain.community.dto;
 
 import lombok.Builder;
 import lombok.Getter; // 추가
