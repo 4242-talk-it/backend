@@ -15,9 +15,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 @Transactional
@@ -27,6 +27,8 @@ public class UserChatService {
     private final ChatMessageRepository chatMessageRepository;
     private final UserRepository userRepository;
     private final SimpMessagingTemplate messagingTemplate;
+
+    private final Map<Long,Set<Long>> extendConsensus = new ConcurrentHashMap<>();
 
     //참여 가능한 채팅방 불러오기
     public List<String> getAvailableTopics() {
@@ -103,7 +105,7 @@ public class UserChatService {
 
         //전체 메세지 수 체크 (40개 제한)
         long totalMessages = chatMessageRepository.countByChatRoom(room);
-        if (room.isOvered() || totalMessages >= 40) {
+        if (room.isOvered() || totalMessages >= room.getMaxTurns()) {
             if (!room.isOvered()) {
                 room.setOvered(true); // 혹시 안 바뀌어있다면 여기서 변경
             }
@@ -141,16 +143,71 @@ public class UserChatService {
                 .isRead(false)
                 .build();
         ChatMessage saved = chatMessageRepository.save(message);
-        if (totalMessages + 1 >= 40) {
+        if (totalMessages + 1 >= room.getMaxTurns()) {
             room.setOvered(true);
 
-            java.util.Map<String, Object> endSignal = new java.util.HashMap<>();
+            Map<String, Object> endSignal = new HashMap<>();
             endSignal.put("type", "CHAT_END");
+            endSignal.put("maxTurns", room.getMaxTurns());
             endSignal.put("roomId", roomId);
 
             messagingTemplate.convertAndSend("/sub/room/" + roomId, endSignal);
         }
         room.updateLastMessage(content);
         return saved;
+    }
+
+    //대화 연장 요청
+    public void processExtendRequest(Long roomId, Long userId) {
+        // 1. 방 존재 여부 확인
+        ChatRoom room = chatRoomRepository.findById(roomId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 방입니다."));
+
+        // 2. 해당 유저가 이 방의 참여자인지 확인 ---> 굳이 이 로직이 필요한가 싶음
+        if (!room.getUser1().getId().equals(userId) && !room.getUser2().getId().equals(userId)) {
+            throw new IllegalArgumentException("해당 채팅방 참여자가 아닙니다.");
+        }
+
+        if (room.getMaxTurns() > 3) {
+            return;
+        }
+
+        // 3. 동의 목록에 유저 추가
+        Set<Long> agreedUsers = extendConsensus.computeIfAbsent(roomId, k -> new HashSet<>());
+        agreedUsers.add(userId);
+
+        // 4. 두 명 모두 동의했는지 확인
+        if (agreedUsers.size() >= 2) {
+            // 합의 완료: 메모리 비우기
+            extendConsensus.remove(roomId);
+
+            // [중요] 연장을 위해 방 상태를 다시 활성화 (필요 시)
+            room.setOvered(false);
+            room.setMaxTurns(room.getMaxTurns() + 25);
+            room.setExtended(true);
+            // chatRoomRepository.save(room);
+
+            // 5. 클라이언트에 연장 완료 신호 전송
+            Map<String, Object> extendSignal = new HashMap<>();
+            extendSignal.put("type", "EXTEND_COMPLETE");
+            extendSignal.put("roomId", roomId);
+            extendSignal.put("newMaxTurns", room.getMaxTurns());
+            extendSignal.put("message", "대화가 연장되었습니다! 다시 대화를 시작해보세요.");
+
+            messagingTemplate.convertAndSend("/sub/room/" + roomId, extendSignal);
+        }
+        // 한 명만 눌렀을 때는 아무 메시지도 보내지 않거나,
+        // 상대방 대기 모달을 유지하기 위해 서버에서 기록만 유지합니다.
+    }
+
+    //연장 요청을 한 명만 한 경우
+    public void processRejectExtension(Long roomId) {
+        extendConsensus.remove(roomId);
+
+        Map<String, Object> rejectSignal = new HashMap<>();
+        rejectSignal.put("type", "EXTEND_REJECTED");
+        rejectSignal.put("message", "상대방이 연장을 원하지 않아 대화가 종료되었습니다.");
+
+        messagingTemplate.convertAndSend("/sub/room/" + roomId, rejectSignal);
     }
 }

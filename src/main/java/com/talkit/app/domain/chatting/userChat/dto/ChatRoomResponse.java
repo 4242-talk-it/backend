@@ -16,6 +16,7 @@ public class ChatRoomResponse {
     private String partnerNickname; // 상대방 이름 (익명 처리용)
     private boolean isMatched;
     private Long userId;
+    private int maxTurns;
 
     public static ChatRoomResponse from(ChatRoom room, Long userId) {
         return ChatRoomResponse.builder()
@@ -23,6 +24,7 @@ public class ChatRoomResponse {
                 .topic(room.getTopic())
                 .isMatched(room.getUser2() != null)
                 .userId(userId)
+                .maxTurns(room.getMaxTurns())
                 .build();
     }
 }
