@@ -8,7 +8,7 @@ import org.springframework.web.client.RestTemplate;
 @Configuration
 public class GeminiConfig {
 
-    @Value("${custom.gemini.key}")
+    @Value("${GEMINI_API_KEY}")
     private String geminiApiKey;
 
     @Bean

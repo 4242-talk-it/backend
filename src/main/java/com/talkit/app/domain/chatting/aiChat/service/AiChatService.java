@@ -38,10 +38,10 @@ public class AiChatService {
     private final UserRepository userRepository;
     private final RestTemplate restTemplate;
 
-    @Value("${custom.gemini.url}")
+    @Value("${GEMINI_API_URL}")
     private String apiUrl;
 
-    @Value("${custom.gemini.key}")
+    @Value("${GEMINI_API_KEY}")
     private String apiKey;
 
     // 1. 채팅방 생성
