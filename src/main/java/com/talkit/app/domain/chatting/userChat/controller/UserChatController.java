@@ -74,4 +74,24 @@ public class UserChatController {
 
         return ResponseEntity.ok(response);
     }
+
+    //대화 연장
+    @MessageMapping("/room/{roomId}/extend")
+    public void extendChat(@DestinationVariable Long roomId,
+                           @Header("userId") String userId) {
+        try {
+            System.out.println("연장요청 수신 - roomId: " + roomId + ", userId: " + userId);
+            Long senderId = Long.parseLong(userId);
+
+            userChatService.processExtendRequest(roomId, senderId);
+        } catch (Exception e) {
+            System.err.println("연장 요청 처리 중 오류 발생: "+e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    @MessageMapping("/room/{roomId}/reject")
+    public void rejectExtend(@DestinationVariable Long roomId) {
+        userChatService.processRejectExtension(roomId);
+    }
 }
