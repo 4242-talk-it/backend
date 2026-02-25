@@ -34,7 +34,7 @@ public class CommunityController {
 
     @Operation(summary = "게시물 목록 조회")
     @GetMapping("/list")
-    public ResponseDto<PageResponseDto<CommunityListResponseDto>> list(
+    public ResponseDto<PageResponseDto<CommunityListResponseDto>> getCommunityList(
             CommunitySearchConditionDto condition, PageRequestVO pageRequestVO
     ) {
         Long userId = AuthenticationHolder.getCurrentUserId();
@@ -52,7 +52,7 @@ public class CommunityController {
     @Operation(summary = "게시물 작성")
     @AuthenticatedUser
     @PostMapping("/create")
-    public ResponseDto<CommunityResponseDto> communityCreate(@RequestBody @Valid CommunityRequestDto requestDto) {
+    public ResponseDto<CommunityResponseDto> createCommunity(@RequestBody @Valid CommunityRequestDto requestDto) {
         Long userId = AuthenticationHolder.getCurrentUserId();
         return ResponseDto.of(communityService.createCommunity(requestDto, userId), "게시물이 성공적으로 생성되었습니다.");
     }
@@ -60,7 +60,7 @@ public class CommunityController {
     @Operation(summary = "게시물 수정")
     @AuthenticatedUser
     @PutMapping("/{id}")
-    public ResponseDto<CommunityResponseDto> update(
+    public ResponseDto<CommunityResponseDto> updateCommunity(
         @RequestBody @Valid CommunityRequestDto requestDto,
         @PathVariable("id") Long communityId) {
 
@@ -71,7 +71,7 @@ public class CommunityController {
     @Operation(summary = "게시물 삭제")
     @AuthenticatedUser // 인증 체크 어노테이션
     @DeleteMapping("/{id}")
-    public ResponseDto<Void> delete(@PathVariable("id") Long id) {
+    public ResponseDto<Void> deleteCommunity(@PathVariable("id") Long id) {
         Long userId = AuthenticationHolder.getCurrentUserId();
         communityService.deleteCommunity(id, userId);
         return ResponseDto.of(null, "게시물이 성공적으로 삭제되었습니다.");

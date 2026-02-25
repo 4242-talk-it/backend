@@ -1,5 +1,6 @@
 package com.talkit.app.domain.community.like.service;
 
+import com.talkit.app.domain.community.base.repository.CommunityRepository;
 import com.talkit.app.domain.community.base.service.CommunityService;
 import com.talkit.app.domain.community.entity.Community;
 import com.talkit.app.domain.community.like.dto.CommunityLikeResponseDto;
@@ -7,10 +8,15 @@ import com.talkit.app.domain.community.entity.CommunityLike;
 import com.talkit.app.domain.community.like.repository.CommunityLikeRepository;
 import com.talkit.app.domain.user.entity.User;
 import com.talkit.app.domain.user.service.UserService;
+
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import static com.talkit.app.global.exception.ExceptionType.NOT_FOUND_COMMUNITY;
 
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
@@ -18,7 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class CommunityLikeService {
 
     private final CommunityLikeRepository communityLikeRepository;
-    private final CommunityService communityService;
+    private final CommunityRepository communityRepository;
     private final UserService userService;
 
     public boolean isLiked(Long id, Long userId) {
@@ -37,10 +43,17 @@ public class CommunityLikeService {
             communityLikeRepository.delete(like.get());
         } else {
             User user = userService.findUserById(userId);
-            Community community = communityService.getCommunity(communityId);
+            Community community = communityRepository.findById(communityId)
+                    .orElseThrow(NOT_FOUND_COMMUNITY::of);
             communityLikeRepository.save(CommunityLike.of(user, community));
         }
         return CommunityLikeResponseDto.of(communityId);
+    }
+
+    public List<CommunityLike> getCommunityLikesByUserId(Long userId) {
+        return userId.equals(User.ANONYMOUS_USER_ID)
+                ? new ArrayList<>()
+                : communityLikeRepository.findCommunityLikesByUserId(userId);
     }
 
 }

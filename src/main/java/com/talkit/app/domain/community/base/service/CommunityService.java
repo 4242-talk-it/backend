@@ -8,12 +8,13 @@ import com.talkit.app.domain.community.base.dto.CommunityListResponseDto;
 import com.talkit.app.domain.community.base.dto.CommunityRequestDto;
 import com.talkit.app.domain.community.base.dto.CommunityResponseDto;
 import com.talkit.app.domain.community.base.dto.CommunitySearchConditionDto;
+import com.talkit.app.domain.community.bookmark.service.BookmarkService;
 import com.talkit.app.domain.community.entity.Community;
 import com.talkit.app.domain.community.comment.repository.CommentRepository;
 import com.talkit.app.domain.community.base.repository.CommunityRepository;
 import com.talkit.app.domain.community.entity.CommunityLike;
-import com.talkit.app.domain.community.like.repository.CommunityLikeRepository;
 import com.talkit.app.domain.community.base.dto.CommunityStatsResponseDto;
+import com.talkit.app.domain.community.like.service.CommunityLikeService;
 import com.talkit.app.domain.user.entity.User;
 import com.talkit.app.domain.user.repository.UserRepository;
 import com.talkit.app.global.dto.PageRequestVO;
@@ -32,9 +33,10 @@ import org.springframework.transaction.annotation.Transactional;
 public class CommunityService {
 
     private final CommunityRepository communityRepository;
-    private final CommunityLikeRepository communityLikeRepository;
     private final CommentRepository commentRepository;
     private final UserRepository userRepository;
+    private final BookmarkService bookmarkService;
+    private final CommunityLikeService communityLikeService;
 
     @Transactional
     public CommunityResponseDto getCommunityById(Long id, Long userId) {
@@ -42,11 +44,15 @@ public class CommunityService {
         community.incrementViewCount();
 
         boolean isLiked = !userId.equals(User.ANONYMOUS_USER_ID) &&
-            communityLikeRepository.findByUserIdAndCommunityId(userId, id).isPresent();
-        int likeCount = communityLikeRepository.countByCommunityId(id);
+                communityLikeService.isLiked(id, userId);
+
+        boolean isBookmarked = !userId.equals(User.ANONYMOUS_USER_ID) &&
+                bookmarkService.isBookmarked(id, userId);
+
+        int likeCount = (int) communityLikeService.getLikeCount(id);
         int commentCount = commentRepository.countByCommunityId(id);
 
-        return CommunityResponseDto.of(community, userId, isLiked, likeCount, commentCount);
+        return CommunityResponseDto.of(community, userId, isLiked, isBookmarked, likeCount, commentCount);
     }
 
     @Transactional
@@ -96,11 +102,11 @@ public class CommunityService {
     public PageResponseDto<CommunityListResponseDto> pagesByCommunity(
             CommunitySearchConditionDto condition, Long userId, PageRequestVO pageRequestVO
     ) {
-        List<CommunityLike> communityLikes = getCommunityLikesBy(userId);
+        List<CommunityLike> communityLikes = communityLikeService.getCommunityLikesByUserId(userId);
 
         return PageResponseDto.of((communityRepository.searchByCondition(condition, pageRequestVO.toPageable()))
                 .map(community -> {
-                    int likeCount = communityLikeRepository.countByCommunityId(community.getId());
+                    int likeCount = (int) communityLikeService.getLikeCount(community.getId());
                     int commentCount = commentRepository.countByCommunityId(community.getId());
                     return CommunityListResponseDto.of(community, likeCount, commentCount, communityLikes);
                 })
@@ -123,12 +129,6 @@ public class CommunityService {
         if (!community.getUser().getId().equals(userId)) {
             throw UNAUTHORIZED_NO_AUTHENTICATION_CONTEXT.of("게시물을 수정/삭제할 권한이 없습니다.");
         }
-    }
-
-    private List<CommunityLike> getCommunityLikesBy(Long userId) {
-        return userId.equals(User.ANONYMOUS_USER_ID)
-            ? new ArrayList<>()
-            : communityLikeRepository.findCommunityLikesByUserId(userId);
     }
 
     @Transactional
