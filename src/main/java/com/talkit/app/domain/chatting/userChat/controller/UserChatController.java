@@ -3,6 +3,7 @@ package com.talkit.app.domain.chatting.userChat.controller;
 import com.talkit.app.domain.chatting.userChat.dto.*;
 import com.talkit.app.domain.chatting.userChat.entity.ChatMessage;
 import com.talkit.app.domain.chatting.userChat.entity.ChatRoom;
+import com.talkit.app.domain.chatting.userChat.service.ChatReviewService;
 import com.talkit.app.domain.chatting.userChat.service.UserChatService;
 import com.talkit.app.domain.user.service.UserDetailsImpl;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,7 @@ import java.util.List;
 @RequestMapping ("/api/user-chat")
 public class UserChatController {
     private final UserChatService userChatService;
+    private final ChatReviewService chatReviewService;
     private final SimpMessagingTemplate messagingTemplate;
 
     @GetMapping("/topics")
@@ -94,4 +96,15 @@ public class UserChatController {
     public void rejectExtend(@DestinationVariable Long roomId) {
         userChatService.processRejectExtension(roomId);
     }
+
+    @PostMapping("/room/{roomId}/review")
+    public ResponseEntity<String> saveReview (
+            @PathVariable Long roomId,
+            @RequestBody ReviewRequest request,
+            @AuthenticationPrincipal UserDetailsImpl userDetails){
+
+        chatReviewService.submitReview(roomId, userDetails.getId(), request.getEmotion());
+        return ResponseEntity.ok("온도가 반영되었습니다.");
+    }
+
 }

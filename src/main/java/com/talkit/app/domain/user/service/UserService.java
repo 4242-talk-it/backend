@@ -45,6 +45,7 @@ public class UserService {
             .nickname(request.getNickname())
             .birthYear(request.getBirthYear())
             .gender(request.getGender())
+            .temperature(36.5)
             .build();
 
         userRepository.save(user);
