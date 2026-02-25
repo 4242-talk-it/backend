@@ -17,6 +17,7 @@ public record CommunityResponseDto(
     int viewCount,
     int likeCount,
     boolean isLiked,
+    boolean isBookmarked,
     int commentCount,
     boolean isOwnedByUser,
     LocalDateTime createdAt,
@@ -24,11 +25,11 @@ public record CommunityResponseDto(
 ) {
 
     public static CommunityResponseDto of(Community community, Long userId) {
-        return CommunityResponseDto.of(community, userId, false, 0, 0);
+        return CommunityResponseDto.of(community, userId, false, false, 0, 0);
     }
 
     public static CommunityResponseDto of(
-        Community community, Long userId, boolean isLiked, int likeCount, int commentCount
+        Community community, Long userId, boolean isLiked, boolean isBookmarked, int likeCount, int commentCount
     ) {
         return CommunityResponseDto.builder()
             .id(community.getId())
@@ -40,6 +41,7 @@ public record CommunityResponseDto(
             .viewCount(community.getViewCount())
             .likeCount(likeCount)
             .isLiked(isLiked)
+            .isBookmarked(isBookmarked)
             .commentCount(commentCount)
             .isOwnedByUser(community.getUser().getId().equals(userId))
             .createdAt(community.getCreatedAt())
