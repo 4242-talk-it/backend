@@ -17,6 +17,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
@@ -49,6 +50,10 @@ public class User extends BaseEntity {
 
     @Column(name = "gender")
     private String gender;
+
+    @Column(name="temperature")
+    @Builder.Default
+    private double temperature=36.5;
 
     @Column(name = "provider_id")
     private String providerId;
@@ -95,4 +100,15 @@ public class User extends BaseEntity {
     public void changePassword(String encodedPassword) {
         this.password = encodedPassword;
     }
+
+    //사용자 매너 온도 관련
+    public void updateTemperature(double delta) {
+        //소수점 첫째자리 까지만
+        this.temperature = Math.round((this.temperature + delta) * 10) / 10.0;
+
+        //최소 0도, 최대 99.9도
+        if (this.temperature < 0) this.temperature = 0.0;
+        if (this.temperature > 99.9) this.temperature = 99.9;
+    }
+
 }

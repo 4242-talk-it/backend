@@ -61,6 +61,7 @@ public class UserChatService {
                     .user1(currentUser)
                     .user2(null)
                     .isOvered(false)
+                    .isMatched(false)
                     .createdAt(LocalDateTime.now())
                     .build();
             room=chatRoomRepository.save(newRoom);
