@@ -48,6 +48,9 @@ public class Community extends BaseEntity {
     @OneToMany(mappedBy = "community", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CommunityLike> communityLikeList = new ArrayList<>();
 
+    @OneToMany(mappedBy = "community", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Bookmark> bookmarkList = new ArrayList<>();
+
     @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "community_tags", joinColumns = @JoinColumn(name = "community_id"))
     @Column(name = "tag_name")
