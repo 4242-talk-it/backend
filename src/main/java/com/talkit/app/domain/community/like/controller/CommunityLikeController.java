@@ -40,7 +40,7 @@ public class CommunityLikeController {
     @Operation(summary = "좋아요 상태 변경(Toggle)")
     @AuthenticatedUser
     @PostMapping("/toggle")
-    public ResponseDto<CommunityLikeResponseDto> toggleRecipeLike(@PathVariable Long id) {
+    public ResponseDto<CommunityLikeResponseDto> toggleCommunityLike(@PathVariable Long id) {
         Long userId = AuthenticationHolder.getCurrentUserId();
         return ResponseDto.of(communityLikeService.toggleLike(id, userId));
     }
