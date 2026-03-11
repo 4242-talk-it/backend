@@ -4,6 +4,7 @@ import com.talkit.app.domain.chatting.userChat.dto.*;
 import com.talkit.app.domain.chatting.userChat.entity.ChatMessage;
 import com.talkit.app.domain.chatting.userChat.entity.ChatRoom;
 import com.talkit.app.domain.chatting.userChat.service.ChatReviewService;
+import com.talkit.app.domain.chatting.userChat.service.MissionService;
 import com.talkit.app.domain.chatting.userChat.service.UserChatService;
 import com.talkit.app.domain.user.service.UserDetailsImpl;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +24,7 @@ import java.util.List;
 public class UserChatController {
     private final UserChatService userChatService;
     private final ChatReviewService chatReviewService;
+    private final MissionService missionService;
     private final SimpMessagingTemplate messagingTemplate;
 
     @GetMapping("/topics")
@@ -45,6 +47,45 @@ public class UserChatController {
         ChatRoomResponse response = userChatService.matchOrCreateRoom(request.getTopic(), userDetails.getId());
 
         return ResponseEntity.ok(response);
+    }
+
+    //키워드 미션
+    @GetMapping("/mission/random")
+    public ResponseEntity<String> getRandomMission() {
+        String keyword = missionService.getRandomMission();
+        return ResponseEntity.ok(keyword);
+    }
+
+    @PostMapping("/room/{roomId}/mission/guess")
+    public ResponseEntity<Boolean> guessMission(
+            @PathVariable Long roomId,
+            @RequestBody GuessRequest request,
+            @AuthenticationPrincipal UserDetailsImpl userDetails) {
+
+        boolean isSuccess = userChatService.checkMissionKeyword(roomId, userDetails.getId(), request.getGuessedKeyword());
+
+        return ResponseEntity.ok(isSuccess);
+    }
+
+    @GetMapping("/room/{roomId}/mission/options")
+    public ResponseEntity<List<String>> getMissionOptions(
+            @PathVariable Long roomId,
+            @AuthenticationPrincipal UserDetailsImpl userDetails) {
+
+        // 서비스에서 정답+오답이 섞인 4개의 키워드 리스트를 가져옵니다.
+        List<String> options = userChatService.getMissionOptions(roomId, userDetails.getId());
+
+        return ResponseEntity.ok(options);
+    }
+
+    @GetMapping("/room/{roomId}/info")
+    public ResponseEntity<ChatRoomResponse> getRoomInfo(
+            @PathVariable Long roomId,
+            @AuthenticationPrincipal UserDetailsImpl userDetails) {
+
+        ChatRoom room = userChatService.getRoom(roomId);
+        // 이전에 만든 DTO 변환 로직 사용 (userId를 넣어야 내 미션만 정확히 반환됨)
+        return ResponseEntity.ok(ChatRoomResponse.from(room, userDetails.getId()));
     }
 
     //메세지 전송

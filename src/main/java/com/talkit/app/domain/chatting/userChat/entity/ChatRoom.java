@@ -28,6 +28,19 @@ public class ChatRoom {
     @JoinColumn(name = "user2_uid")
     private User user2;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name="user1_mission_id")
+    private MissionKeyword user1Mission;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name="user2_mission_id")
+    private MissionKeyword user2Mission;
+
+    public void assignMissions(MissionKeyword m1, MissionKeyword m2) {
+        this.user1Mission = m1;
+        this.user2Mission = m2;
+    }
+
     private boolean isOvered; // 대화 종료 여부
     private LocalDateTime createdAt; //채팅방 생성 일시
     private String lastMessage;
