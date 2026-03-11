@@ -4,8 +4,12 @@ import com.talkit.app.domain.chatting.userChat.dto.ChatRoomResponse;
 import com.talkit.app.domain.chatting.userChat.dto.MyChatRoomResponse;
 import com.talkit.app.domain.chatting.userChat.entity.ChatMessage;
 import com.talkit.app.domain.chatting.userChat.entity.ChatRoom;
+import com.talkit.app.domain.chatting.userChat.entity.MissionKeyword;
+import com.talkit.app.domain.chatting.userChat.entity.UserMission;
 import com.talkit.app.domain.chatting.userChat.repository.ChatMessageRepository;
 import com.talkit.app.domain.chatting.userChat.repository.ChatRoomRepository;
+import com.talkit.app.domain.chatting.userChat.repository.MissionKeywordRepository;
+import com.talkit.app.domain.chatting.userChat.repository.UserMissionRepository;
 import com.talkit.app.domain.user.entity.User;
 import com.talkit.app.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +31,9 @@ public class UserChatService {
     private final ChatMessageRepository chatMessageRepository;
     private final UserRepository userRepository;
     private final SimpMessagingTemplate messagingTemplate;
+    private final MissionService missionService;
+    private final UserMissionRepository userMissionRepository;
+    private final MissionKeywordRepository missionKeywordRepository;
 
     private final Map<Long,Set<Long>> extendConsensus = new ConcurrentHashMap<>();
 
@@ -54,6 +61,16 @@ public class UserChatService {
         if (existingRoom.isPresent()) {
             room = existingRoom.get();
             room.setUser2(currentUser);
+            room.setMatched(true);
+
+            room.setUser1Mission(missionService.getRandomMissionEntity());
+            room.setUser2Mission(missionService.getRandomMissionEntity());
+
+            // 매칭 완료 신호 전송 (기존 String 대신 JSON 객체로 보내면 프론트 처리가 더 쉬움)
+            Map<String, Object> matchSignal = new HashMap<>();
+            matchSignal.put("type", "MATCH_COMPLETE");
+            matchSignal.put("roomId", room.getRoomId());
+
             messagingTemplate.convertAndSend("/sub/room/" + room.getRoomId(), "MATCH_COMPLETE");
         } else {
             ChatRoom newRoom = ChatRoom.builder()
@@ -66,7 +83,12 @@ public class UserChatService {
                     .build();
             room=chatRoomRepository.save(newRoom);
         }
-        return ChatRoomResponse.from(room,userId);
+        return ChatRoomResponse.from(chatRoomRepository.findByIdWithMissionKeyword(room.getRoomId()).get(), userId);
+    }
+
+    public ChatRoom getRoom(Long roomId) {
+        return chatRoomRepository.findByIdWithMissionKeyword(roomId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 방입니다. ID: " + roomId));
     }
 
     public List<MyChatRoomResponse> getMyChatRooms(Long userId) {
@@ -94,14 +116,85 @@ public class UserChatService {
     }
 
     public List<ChatMessage> getChatHistory(Long roomId) {
-        ChatRoom room = chatRoomRepository.findById(roomId)
+        ChatRoom room = chatRoomRepository.findByIdWithMissionKeyword(roomId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 방입니다."));
         return chatMessageRepository.findByChatRoomOrderByTimestampAsc(room);
     }
 
+    @Transactional
+    public boolean checkMissionKeyword(Long roomId, Long myId, String guessedKeyword) {
+        ChatRoom room = chatRoomRepository.findByIdWithMissionKeyword(roomId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 방입니다."));
+
+        // 1. 내가 누구인지 확인하고, '상대방'의 정답 정보를 가져옴
+        User targetUser;
+        MissionKeyword actualMission;
+
+        if (room.getUser1().getId().equals(myId)) {
+            // 내가 user1이면, 검증 대상은 user2
+            targetUser = room.getUser2();
+            actualMission = room.getUser2Mission();
+        } else {
+            // 내가 user2이면, 검증 대상은 user1
+            targetUser = room.getUser1();
+            actualMission = room.getUser1Mission();
+        }
+
+        // 2. 정답 비교 (공백 제거 및 대소문자 무시하면 더 좋음)
+        boolean isSuccess = actualMission.getKeyword().trim().equals(guessedKeyword.trim());
+
+        // 3. UserMission 결과 저장
+        UserMission result = UserMission.builder()
+                .user(targetUser) // 미션을 부여받았던 당사자
+                .chatRoom(room)
+                .missionKeyword(actualMission)
+                .guessedKeyword(guessedKeyword)
+                .isSuccess(isSuccess)
+                .build();
+
+        userMissionRepository.save(result);
+
+        return isSuccess;
+    }
+
+    public List<String> getMissionOptions(Long roomId, Long myId) {
+        ChatRoom room = chatRoomRepository.findByIdWithMissionKeyword(roomId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 방입니다."));
+
+        String myKeyword = "";
+        String targetKeyword = "";
+
+        if (room.getUser1().getId().equals(myId)) {
+            myKeyword = room.getUser1Mission().getKeyword();
+            targetKeyword = room.getUser2Mission().getKeyword();
+        } else {
+            myKeyword = room.getUser2Mission().getKeyword();
+            targetKeyword = room.getUser1Mission().getKeyword();
+        }
+
+        // 2. 전체 키워드 중 '내 것'과 '상대방 것'을 제외한 오답 후보들 추출
+        final String finalMyKeyword = myKeyword;
+        final String finalTargetKeyword = targetKeyword;
+
+        List<String> distractors = missionKeywordRepository.findAll().stream()
+                .map(MissionKeyword::getKeyword)
+                .filter(k -> !k.equals(finalMyKeyword) && !k.equals(finalTargetKeyword))
+                .collect(Collectors.toList());
+
+        // 3. 오답 후보 섞어서 3개 선택
+        Collections.shuffle(distractors);
+        List<String> options = new ArrayList<>(distractors.subList(0, Math.min(3, distractors.size())));
+
+        // 4. 실제 정답(상대방 키워드) 추가 후 최종 셔플
+        options.add(finalTargetKeyword);
+        Collections.shuffle(options);
+
+        return options;
+    }
+
     //메세지 전송
     public ChatMessage sendMessage(Long roomId, Long userId, String content) {
-        ChatRoom room = chatRoomRepository.findById(roomId)
+        ChatRoom room = chatRoomRepository.findByIdWithMissionKeyword(roomId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 방입니다."));
 
         //전체 메세지 수 체크 (40개 제한)
@@ -161,7 +254,7 @@ public class UserChatService {
     //대화 연장 요청
     public void processExtendRequest(Long roomId, Long userId) {
         // 1. 방 존재 여부 확인
-        ChatRoom room = chatRoomRepository.findById(roomId)
+        ChatRoom room = chatRoomRepository.findByIdWithMissionKeyword(roomId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 방입니다."));
 
         // 2. 해당 유저가 이 방의 참여자인지 확인 ---> 굳이 이 로직이 필요한가 싶음

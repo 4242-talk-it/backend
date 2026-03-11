@@ -14,6 +14,12 @@ import java.util.Optional;
 
 public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
 
+    @Query("SELECT r FROM ChatRoom r " +
+            "LEFT JOIN FETCH r.user1Mission " +
+            "LEFT JOIN FETCH r.user2Mission " +
+            "WHERE r.roomId = :id")
+    Optional<ChatRoom> findByIdWithMissionKeyword(@Param("id") Long id);
+
     //종료되지 않은 방+같은 토픽을 고른 경우 해당 방 재진입
     @Query("SELECT r FROM ChatRoom r WHERE r.topic = :topic AND r.isOvered = false AND (r.user1 = :user OR r.user2 = :user)")
     Optional<ChatRoom> findFirstByTopicAndIsOveredFalseAndUser1OrUser2(@Param("topic") String topic, @Param("user") User user);
