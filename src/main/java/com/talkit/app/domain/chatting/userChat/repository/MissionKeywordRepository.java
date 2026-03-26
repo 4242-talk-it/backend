@@ -1,6 +1,6 @@
 package com.talkit.app.domain.chatting.userChat.repository;
 
-import com.talkit.app.domain.chatting.userChat.entity.MissionKeyword;
+import com.talkit.app.domain.chatting.badge.entity.MissionKeyword;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 

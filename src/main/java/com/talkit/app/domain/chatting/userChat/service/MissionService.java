@@ -1,6 +1,6 @@
 package com.talkit.app.domain.chatting.userChat.service;
 
-import com.talkit.app.domain.chatting.userChat.entity.MissionKeyword;
+import com.talkit.app.domain.chatting.badge.entity.MissionKeyword;
 import com.talkit.app.domain.chatting.userChat.repository.MissionKeywordRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

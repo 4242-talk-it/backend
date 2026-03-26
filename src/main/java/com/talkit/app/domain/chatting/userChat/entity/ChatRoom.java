@@ -1,5 +1,6 @@
 package com.talkit.app.domain.chatting.userChat.entity;
 
+import com.talkit.app.domain.chatting.badge.entity.MissionKeyword;
 import com.talkit.app.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

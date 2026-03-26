@@ -1,4 +1,4 @@
-package com.talkit.app.domain.chatting.userChat.entity;
+package com.talkit.app.domain.chatting.badge.entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;

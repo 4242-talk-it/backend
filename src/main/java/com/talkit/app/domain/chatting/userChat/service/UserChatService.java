@@ -4,7 +4,7 @@ import com.talkit.app.domain.chatting.userChat.dto.ChatRoomResponse;
 import com.talkit.app.domain.chatting.userChat.dto.MyChatRoomResponse;
 import com.talkit.app.domain.chatting.userChat.entity.ChatMessage;
 import com.talkit.app.domain.chatting.userChat.entity.ChatRoom;
-import com.talkit.app.domain.chatting.userChat.entity.MissionKeyword;
+import com.talkit.app.domain.chatting.badge.entity.MissionKeyword;
 import com.talkit.app.domain.chatting.userChat.entity.UserMission;
 import com.talkit.app.domain.chatting.userChat.repository.ChatMessageRepository;
 import com.talkit.app.domain.chatting.userChat.repository.ChatRoomRepository;
