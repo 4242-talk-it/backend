@@ -1,7 +1,10 @@
 package com.talkit.app.domain.user.service;
 
+import com.talkit.app.domain.chatting.badge.service.BadgeGrantService;
 import com.talkit.app.domain.user.dto.UserRequestDto;
 import com.talkit.app.domain.user.entity.User;
+import com.talkit.app.domain.user.entity.UserActivity;
+import com.talkit.app.domain.user.repository.UserActivityRepository;
 import com.talkit.app.domain.user.repository.UserRepository;
 import com.talkit.app.global.exception.BusinessLogicException;
 import com.talkit.app.global.exception.ExceptionType;
@@ -16,6 +19,8 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final BadgeGrantService badgeGrantService;
+    private final UserActivityRepository userActivityRepository;
 
     public User login(UserRequestDto.Login request) {
         User user = userRepository.findByEmail(request.getEmail())
@@ -28,7 +33,21 @@ public class UserService {
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new BusinessLogicException(ExceptionType.NOT_FOUND_USER);
         }
+        updateLoginAndCheckBadge(user);
         return user;
+    }
+
+    //뱃지 : 새싹, 대화왕, 루틴러, 열정맨
+    @Transactional
+    protected void updateLoginAndCheckBadge(User user) {
+        UserActivity activity = userActivityRepository.findByUserId(user.getId())
+                .orElseThrow(() -> new IllegalStateException(
+                        "UserActivitynot found: userId "+user.getId()));
+
+        activity.updateLoginStreak();
+        userActivityRepository.save(activity);
+
+        badgeGrantService.checkAttendanceBadge(user);
     }
 
     @Transactional
@@ -49,6 +68,11 @@ public class UserService {
             .build();
 
         userRepository.save(user);
+
+        UserActivity activity=UserActivity.builder()
+                .user(user)
+                .build();
+        userActivityRepository.save(activity);
     }
 
     @Transactional

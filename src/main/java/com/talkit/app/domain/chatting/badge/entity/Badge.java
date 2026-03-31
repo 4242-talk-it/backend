@@ -5,7 +5,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.experimental.SuperBuilder;
 
 @Entity
 @Table(name = "badge")
@@ -28,21 +27,23 @@ public class Badge {
     @Column(name="icon")
     private String icon; //뱃지아이콘
 
-    private int requiredSuccessCnt; //획득에 필요한 성공 횟수
+    @Column(name="goal_cnt")
+    private int goalCnt; //획득에 필요한 성공 횟수
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(name="badge_type", nullable = false)
     private BadgeType badgeType;
 
+    @Column(name="condition_key")
     private String conditionKey; //조건대상 (예: "sports", "NIGHT", "POSITIVE", "LENGTH_20")
 
 
     @Builder
-    public Badge(String name, String description, String icon, int requiredSuccessCnt, BadgeType badgeType, String conditionKey) {
+    public Badge(String name, String description, String icon, int goalCnt, BadgeType badgeType, String conditionKey) {
         this.name=name;
         this.description=description;
         this.icon=icon;
-        this.requiredSuccessCnt=requiredSuccessCnt;
+        this.goalCnt =goalCnt;
         this.badgeType=badgeType;
         this.conditionKey=conditionKey;
     }

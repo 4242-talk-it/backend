@@ -15,4 +15,7 @@ public class MissionKeyword {
     @Column(nullable = false, unique = true)
     private String keyword;
 
+    @Column(nullable = false)
+    private String category;
+
 }

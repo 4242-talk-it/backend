@@ -1,5 +1,6 @@
 package com.talkit.app.domain.chatting.userChat.service;
 
+import com.talkit.app.domain.chatting.badge.service.BadgeGrantService;
 import com.talkit.app.domain.chatting.userChat.entity.ChatReview;
 import com.talkit.app.domain.chatting.userChat.entity.ChatRoom;
 import com.talkit.app.domain.chatting.userChat.entity.EmotionType;
@@ -18,6 +19,7 @@ public class ChatReviewService {
     private final ChatReviewRepository chatReviewRepository;
     private final ChatRoomRepository chatRoomRepository;
     private final UserRepository userRepository;
+    private final BadgeGrantService badgeGrantService;
 
     public void submitReview (Long roomId, Long writerId, String emotionDescription) {
         ChatRoom room = chatRoomRepository.findById(roomId)
@@ -44,5 +46,6 @@ public class ChatReviewService {
 
         target.updateTemperature(delta);
 
+        badgeGrantService.checkTemperatureBadge(target);
     }
 }
