@@ -24,4 +24,17 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
     @Modifying
     @Query("UPDATE ChatMessage m SET m.isRead = true WHERE m.chatRoom = :room AND m.sender != :user")
     void markAsReadByRoomAndUser(@Param("room") ChatRoom room, @Param("user") User user);
+
+    @Query("""
+        SELECT COUNT(m) > 0
+        FROM ChatMessage m
+        WHERE m.chatRoom = :room
+          AND m.sender = :user
+          AND LENGTH(m.message) > :length
+    """)
+    boolean existsByChatRoomAndSenderAndMessageLengthGreaterThan(
+            @Param("room") ChatRoom room,
+            @Param("user") User user,
+            @Param("length") int length
+    );
 }

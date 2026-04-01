@@ -1,5 +1,6 @@
 package com.talkit.app.domain.chatting.userChat.service;
 
+import com.talkit.app.domain.chatting.badge.service.BadgeGrantService;
 import com.talkit.app.domain.chatting.userChat.dto.ChatRoomResponse;
 import com.talkit.app.domain.chatting.userChat.dto.MyChatRoomResponse;
 import com.talkit.app.domain.chatting.userChat.entity.ChatMessage;
@@ -11,6 +12,8 @@ import com.talkit.app.domain.chatting.userChat.repository.ChatRoomRepository;
 import com.talkit.app.domain.chatting.userChat.repository.MissionKeywordRepository;
 import com.talkit.app.domain.chatting.userChat.repository.UserMissionRepository;
 import com.talkit.app.domain.user.entity.User;
+import com.talkit.app.domain.user.entity.UserActivity;
+import com.talkit.app.domain.user.repository.UserActivityRepository;
 import com.talkit.app.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -34,6 +37,8 @@ public class UserChatService {
     private final MissionService missionService;
     private final UserMissionRepository userMissionRepository;
     private final MissionKeywordRepository missionKeywordRepository;
+    private final BadgeGrantService badgeGrantService;
+    private final UserActivityRepository userActivityRepository;
 
     private final Map<Long,Set<Long>> extendConsensus = new ConcurrentHashMap<>();
 
@@ -246,6 +251,7 @@ public class UserChatService {
             endSignal.put("roomId", roomId);
 
             messagingTemplate.convertAndSend("/sub/room/" + roomId, endSignal);
+            handleChatEndBadge(room);
         }
         room.updateLastMessage(content);
         return saved;
@@ -298,10 +304,63 @@ public class UserChatService {
     public void processRejectExtension(Long roomId) {
         extendConsensus.remove(roomId);
 
+        chatRoomRepository.findByIdWithMissionKeyword(roomId)
+                .ifPresent(this::handleChatEndBadge);
+
         Map<String, Object> rejectSignal = new HashMap<>();
         rejectSignal.put("type", "EXTEND_REJECTED");
         rejectSignal.put("message", "상대방이 연장을 원하지 않아 대화가 종료되었습니다.");
 
         messagingTemplate.convertAndSend("/sub/room/" + roomId, rejectSignal);
+    }
+
+    private void handleChatEndBadge(ChatRoom room) {
+        User user1 = room.getUser1();
+        User user2 = room.getUser2();
+        if (user2 == null) return; // 매칭 안 된 방은 스킵
+
+        // UserActivity 카운트 업데이트
+        updateChatActivity(room, user1);
+        updateChatActivity(room, user2);
+
+        // MISSION_KEYWORD 체크
+        if (room.getUser1Mission() != null) {
+            badgeGrantService.checkMissionKeywordBadge(
+                    user1, room.getUser1Mission().getCategory());
+        }
+        if (room.getUser2Mission() != null) {
+            badgeGrantService.checkMissionKeywordBadge(
+                    user2, room.getUser2Mission().getCategory());
+        }
+
+        // CHAT_PATTERN 체크
+        badgeGrantService.checkChatPatternBadge(user1);
+        badgeGrantService.checkChatPatternBadge(user2);
+    }
+
+    //뱃지 : totalChat++, night/morning/longChat++
+    private void updateChatActivity(ChatRoom room, User user) {
+        UserActivity activity = userActivityRepository.findByUserId(user.getId())
+                .orElseThrow(() -> new IllegalStateException(
+                        "userActivity not found: userId= "+user.getId()));
+
+        activity.incrementTotalChat();
+
+        // 야행성/아침형 판단 (채팅방 생성 시간 기준)
+        int hour = room.getCreatedAt().getHour();
+        if (hour >= 22 || hour < 6) {
+            activity.incrementNightChat();
+        } else if (hour >= 7 && hour < 10) {
+            activity.incrementMorningChat();
+        }
+
+        // 투머치토커: 이 방에서 내가 보낸 30자 이상 메시지 존재 여부
+        boolean haslongMessage = chatMessageRepository
+                .existsByChatRoomAndSenderAndMessageLengthGreaterThan(room, user, 30);
+        if (haslongMessage) {
+            activity.incrementLongChat();
+        }
+
+        userActivityRepository.save(activity);
     }
 }
