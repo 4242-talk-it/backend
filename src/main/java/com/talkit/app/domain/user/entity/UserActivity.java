@@ -43,6 +43,10 @@ public class UserActivity {
     @Column(columnDefinition = "int default 0")
     private int longChatCount=0; //투머치토커
 
+    @Builder.Default
+    @Column(columnDefinition = "int default 0")
+    private int shortChatCount=0; //침묵맨
+
     //피드백 카운트
     @Builder.Default
     @Column(columnDefinition = "int default 0")
@@ -64,6 +68,7 @@ public class UserActivity {
     public void incrementNightChat() {this.nightChatCount++;}
     public void incrementMorningChat() {this.morningChatCount++;}
     public void incrementLongChat() {this.longChatCount++;}
+    public void incrementShortChat() {this.shortChatCount++;}
 
     //연속 접속 일수, 마지막 로그인 일시 저장
     public void updateLoginStreak() {

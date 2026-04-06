@@ -242,8 +242,18 @@ public class UserChatService {
                 .isRead(false)
                 .build();
         ChatMessage saved = chatMessageRepository.save(message);
+        // 투머치토커, 침묵맨
+        if (content.length() > 30 || content.length() < 10) {
+            UserActivity activity = userActivityRepository.findByUserId(userId)
+                    .orElseThrow(() -> new IllegalStateException(
+                            "UserActivity not found: userId=" + userId));
+            if (content.length() > 30) activity.incrementLongChat();
+            if (content.length() < 10) activity.incrementShortChat();
+            userActivityRepository.save(activity);
+        }
+
         if (totalMessages + 1 >= room.getMaxTurns()) {
-            room.setOvered(true);
+            room.endChat();
 
             Map<String, Object> endSignal = new HashMap<>();
             endSignal.put("type", "CHAT_END");
@@ -305,7 +315,10 @@ public class UserChatService {
         extendConsensus.remove(roomId);
 
         chatRoomRepository.findByIdWithMissionKeyword(roomId)
-                .ifPresent(this::handleChatEndBadge);
+                .ifPresent(room -> {
+                    room.endChat(); // endedAt 설정
+                    handleChatEndBadge(room);
+                });
 
         Map<String, Object> rejectSignal = new HashMap<>();
         rejectSignal.put("type", "EXTEND_REJECTED");
@@ -336,6 +349,10 @@ public class UserChatService {
         // CHAT_PATTERN 체크
         badgeGrantService.checkChatPatternBadge(user1);
         badgeGrantService.checkChatPatternBadge(user2);
+
+        //새싹/대화왕 뱃지 체크
+        badgeGrantService.checkAttendanceBadge(user1);
+        badgeGrantService.checkAttendanceBadge(user2);
     }
 
     //뱃지 : totalChat++, night/morning/longChat++
@@ -347,18 +364,13 @@ public class UserChatService {
         activity.incrementTotalChat();
 
         // 야행성/아침형 판단 (채팅방 생성 시간 기준)
-        int hour = room.getCreatedAt().getHour();
+        int hour = room.getEndedAt() != null
+                ? room.getEndedAt().getHour()
+                : LocalDateTime.now().getHour();
         if (hour >= 22 || hour < 6) {
             activity.incrementNightChat();
         } else if (hour >= 7 && hour < 10) {
             activity.incrementMorningChat();
-        }
-
-        // 투머치토커: 이 방에서 내가 보낸 30자 이상 메시지 존재 여부
-        boolean haslongMessage = chatMessageRepository
-                .existsByChatRoomAndSenderAndMessageLengthGreaterThan(room, user, 30);
-        if (haslongMessage) {
-            activity.incrementLongChat();
         }
 
         userActivityRepository.save(activity);
