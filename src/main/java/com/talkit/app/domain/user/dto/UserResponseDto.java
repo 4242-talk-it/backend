@@ -9,7 +9,7 @@ import lombok.Getter;
 @Builder
 @AllArgsConstructor
 public class UserResponseDto {
-    private Long id;
+    private Long userId;
     private String email;
     private String nickname;
     private String birthYear;
@@ -17,7 +17,7 @@ public class UserResponseDto {
 
     public static UserResponseDto from(User user) {
         return UserResponseDto.builder()
-            .id(user.getId())
+            .userId(user.getId())
             .email(user.getEmail())
             .nickname(user.getNickname())
             .birthYear(user.getBirthYear())

@@ -42,12 +42,12 @@ public class UserService {
     protected void updateLoginAndCheckBadge(User user) {
         UserActivity activity = userActivityRepository.findByUserId(user.getId())
                 .orElseThrow(() -> new IllegalStateException(
-                        "UserActivitynot found: userId "+user.getId()));
+                        "UserActivity not found: userId "+user.getId()));
 
         activity.updateLoginStreak();
         userActivityRepository.save(activity);
 
-        badgeGrantService.checkAttendanceBadge(user);
+        badgeGrantService.checkStreakBadge(user);
     }
 
     @Transactional

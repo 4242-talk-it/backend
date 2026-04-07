@@ -59,19 +59,24 @@ public class BadgeGrantService {
                 activity.getLongChatCount(), 50);
     }
 
+    @Transactional
+    public void checkStreakBadge(User user) {
+        UserActivity activity = getActivity(user);
+        checkAndGrant(user, BadgeType.ATTENDANCE_STREAK, "routine",
+                activity.getStreakDays(), 5);
+        checkAndGrant(user, BadgeType.ATTENDANCE_STREAK, "passion",
+                activity.getStreakDays(), 21);
+    }
+
     // ── ATTENDANCE_STREAK ─────────────────────────────────────────
     // 로그인 후 updateLoginStreak() 호출된 다음에 실행
     @Transactional
     public void checkAttendanceBadge(User user) {
         UserActivity activity = getActivity(user);
         checkAndGrant(user, BadgeType.ATTENDANCE_STREAK, "start",
-                activity.getTotalChatCount(), 10);
+                activity.getTotalChatCount(), 3);
         checkAndGrant(user, BadgeType.ATTENDANCE_STREAK, "king",
                 activity.getTotalChatCount(), 200);
-        checkAndGrant(user, BadgeType.ATTENDANCE_STREAK, "routine",
-                activity.getStreakDays(), 5);
-        checkAndGrant(user, BadgeType.ATTENDANCE_STREAK, "passion",
-                activity.getStreakDays(), 21);
     }
 
     // ── 헬퍼 ──────────────────────────────────────────────────────

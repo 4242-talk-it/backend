@@ -82,7 +82,8 @@ public class SecurityConfig {
                     "/api/stats/**",
                     "/api/auth/user",
                     "/api/ai-chat/**",
-                    "/api/user-chat/**"
+                    "/api/user-chat/**",
+                    "api/chatting-badge/**"
                 ).hasAuthority("ROLE_USER")
 
                 .anyRequest().authenticated()
