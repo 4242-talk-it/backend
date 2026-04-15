@@ -47,6 +47,8 @@ public class UserActivity {
     @Column(columnDefinition = "int default 0")
     private int shortChatCount=0; //침묵맨
 
+
+
     //피드백 카운트
     @Builder.Default
     @Column(columnDefinition = "int default 0")
@@ -58,8 +60,13 @@ public class UserActivity {
 
     @Builder.Default
     @Column(columnDefinition = "int default 0")
-    private int gagFeedbackCount=0;
+    private int gagFeedbackCount=0; //개그맨
 
+    @Builder.Default
+    @Column(columnDefinition = "int default 0")
+    private int repeatCount=0; //앵무새
+
+    public void incrementRepeatFeedback() {this.repeatCount++;}
     public void incrementGagFeedback() { this.gagFeedbackCount++; }
     public void incrementYawnFeedback() { this.yawnFeedbackCount++; }
     public void incrementQuestionFeedback() { this.questionFeedbackCount++; }

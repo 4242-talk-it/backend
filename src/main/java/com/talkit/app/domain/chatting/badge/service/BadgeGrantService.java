@@ -68,6 +68,19 @@ public class BadgeGrantService {
                 activity.getStreakDays(), 21);
     }
 
+    @Transactional
+    public void checkFeedbackSpecialBadge(User user) {
+        UserActivity activity = getActivity(user);
+        checkAndGrant(user, BadgeType.FEEDBACK_SPECIAL, "gag",
+                activity.getGagFeedbackCount(), 20);
+        checkAndGrant(user, BadgeType.FEEDBACK_SPECIAL, "question",
+                activity.getQuestionFeedbackCount(), 20);
+        checkAndGrant(user, BadgeType.FEEDBACK_SPECIAL, "zzz",
+                activity.getYawnFeedbackCount(), 20);
+        checkAndGrant(user, BadgeType.FEEDBACK_SPECIAL, "repeat",
+                activity.getRepeatCount(), 20);
+    }
+
     // ── ATTENDANCE_STREAK ─────────────────────────────────────────
     // 로그인 후 updateLoginStreak() 호출된 다음에 실행
     @Transactional
