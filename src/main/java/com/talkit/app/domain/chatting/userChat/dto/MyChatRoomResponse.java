@@ -11,4 +11,5 @@ public class MyChatRoomResponse {
     private String lastMessage;
     private String lastTime;
     private Long userId;
+    private boolean hasUnread;
 }

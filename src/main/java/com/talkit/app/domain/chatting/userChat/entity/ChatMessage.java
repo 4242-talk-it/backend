@@ -24,11 +24,16 @@ public class ChatMessage {
     private ChatRoom chatRoom;
 
     @ManyToOne
-    @JoinColumn(name = "senderUid")
+    @JoinColumn(name = "senderUid", nullable = true)
     private User sender;
 
     @Column(columnDefinition = "TEXT")
     private String message;
     private LocalDateTime timestamp;
     private boolean isRead;
+
+    //메세지 타입 (talk,system)
+    @Enumerated(EnumType.STRING)
+    @Builder.Default
+    private MessageType type=MessageType.TALK;
 }

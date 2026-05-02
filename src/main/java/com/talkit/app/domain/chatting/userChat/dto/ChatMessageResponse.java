@@ -18,13 +18,15 @@ public class ChatMessageResponse {
     private Long senderId;
     private String senderNickname;
     private LocalDateTime timestamp;
+    private String type;
 
     public static ChatMessageResponse from(ChatMessage message) {
         return ChatMessageResponse.builder()
                 .cmid(message.getCmid())
                 .message(message.getMessage())
-                .senderId(message.getSender().getId())
-                .senderNickname(message.getSender().getNickname())
+                .senderId(message.getSender() != null ? message.getSender().getId() : null)
+                .senderNickname(message.getSender() != null ? message.getSender().getNickname() : null)
+                .type(message.getType().name().toLowerCase())
                 .timestamp(message.getTimestamp())
                 .build();
     }

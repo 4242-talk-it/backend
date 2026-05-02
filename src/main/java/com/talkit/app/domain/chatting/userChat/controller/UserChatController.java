@@ -35,7 +35,6 @@ public class UserChatController {
 
     @GetMapping("/my-rooms")
     public ResponseEntity<List<MyChatRoomResponse>> getMyRooms(@AuthenticationPrincipal UserDetailsImpl userDetails) {
-        // 인증된 객체(userDetails)에서 내 ID를 꺼내 서비스에 전달합니다.
         List<MyChatRoomResponse> response = userChatService.getMyChatRooms(userDetails.getId());
         return ResponseEntity.ok(response);
     }
@@ -47,6 +46,14 @@ public class UserChatController {
         ChatRoomResponse response = userChatService.matchOrCreateRoom(request.getTopic(), userDetails.getId());
 
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/room/{roomId}/read")
+    public ResponseEntity<Void> markAsRead(
+            @PathVariable Long roomId,
+            @AuthenticationPrincipal UserDetailsImpl userDetails) {
+        userChatService.markMessagesAsRead(roomId, userDetails.getId());
+        return ResponseEntity.ok().build();
     }
 
     //키워드 미션
@@ -136,6 +143,14 @@ public class UserChatController {
     @MessageMapping("/room/{roomId}/reject")
     public void rejectExtend(@DestinationVariable Long roomId) {
         userChatService.processRejectExtension(roomId);
+    }
+
+    @PostMapping("/room/{roomId}/force-end")
+    public ResponseEntity<String> forceEndChat(
+            @PathVariable Long roomId,
+            @AuthenticationPrincipal UserDetailsImpl userDetails) {
+        userChatService.forceEndChat(roomId, userDetails.getId());
+        return ResponseEntity.ok("강제 종료되었습니다.");
     }
 
     @PostMapping("/room/{roomId}/review")
