@@ -7,10 +7,14 @@ import com.talkit.app.domain.chatting.userChat.entity.EmotionType;
 import com.talkit.app.domain.chatting.userChat.repository.ChatReviewRepository;
 import com.talkit.app.domain.chatting.userChat.repository.ChatRoomRepository;
 import com.talkit.app.domain.user.entity.User;
+import com.talkit.app.domain.user.entity.UserTemperatureHistory;
 import com.talkit.app.domain.user.repository.UserRepository;
+import com.talkit.app.domain.user.repository.UserTemperatureHistoryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
 
 @Service
 @Transactional
@@ -20,6 +24,7 @@ public class ChatReviewService {
     private final ChatRoomRepository chatRoomRepository;
     private final UserRepository userRepository;
     private final BadgeGrantService badgeGrantService;
+    private final UserTemperatureHistoryRepository userTemperatureHistoryRepository;
 
     public void submitReview (Long roomId, Long writerId, String emotionDescription) {
         ChatRoom room = chatRoomRepository.findById(roomId)
@@ -47,5 +52,12 @@ public class ChatReviewService {
         target.updateTemperature(delta);
 
         badgeGrantService.checkTemperatureBadge(target);
+
+        UserTemperatureHistory history = UserTemperatureHistory.builder()
+                .user(target)
+                .temperature(target.getTemperature())
+                .recordedAt(LocalDateTime.now())
+                .build();
+        userTemperatureHistoryRepository.save(history);
     }
 }

@@ -1,21 +1,19 @@
 package com.talkit.app.domain.chatting.userChat.service;
 
 import com.talkit.app.domain.chatting.badge.service.BadgeGrantService;
+import com.talkit.app.domain.chatting.userChat.dto.ChatHistoryResponse;
+import com.talkit.app.domain.chatting.userChat.dto.ChatRoomDetailResponse;
 import com.talkit.app.domain.chatting.userChat.dto.ChatRoomResponse;
 import com.talkit.app.domain.chatting.userChat.dto.MyChatRoomResponse;
-import com.talkit.app.domain.chatting.userChat.entity.ChatMessage;
-import com.talkit.app.domain.chatting.userChat.entity.ChatRoom;
+import com.talkit.app.domain.chatting.userChat.entity.*;
 import com.talkit.app.domain.chatting.badge.entity.MissionKeyword;
-import com.talkit.app.domain.chatting.userChat.entity.MessageType;
-import com.talkit.app.domain.chatting.userChat.entity.UserMission;
-import com.talkit.app.domain.chatting.userChat.repository.ChatMessageRepository;
-import com.talkit.app.domain.chatting.userChat.repository.ChatRoomRepository;
-import com.talkit.app.domain.chatting.userChat.repository.MissionKeywordRepository;
-import com.talkit.app.domain.chatting.userChat.repository.UserMissionRepository;
+import com.talkit.app.domain.chatting.userChat.repository.*;
 import com.talkit.app.domain.user.entity.User;
 import com.talkit.app.domain.user.entity.UserActivity;
+import com.talkit.app.domain.user.entity.UserTemperatureHistory;
 import com.talkit.app.domain.user.repository.UserActivityRepository;
 import com.talkit.app.domain.user.repository.UserRepository;
+import com.talkit.app.domain.user.repository.UserTemperatureHistoryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
@@ -40,6 +38,9 @@ public class UserChatService {
     private final MissionKeywordRepository missionKeywordRepository;
     private final BadgeGrantService badgeGrantService;
     private final UserActivityRepository userActivityRepository;
+    private final ChatReviewRepository chatReviewRepository;
+    private final ChatFeedbackRepository chatFeedbackRepository;
+    private final UserTemperatureHistoryRepository userTemperatureHistoryRepository;
 
     private final Map<Long,Set<Long>> extendConsensus = new ConcurrentHashMap<>();
 
@@ -417,6 +418,17 @@ public class UserChatService {
                 ? room.getUser2().getId() : room.getUser1().getId();
         messagingTemplate.convertAndSend("/sub/user/" + userId + "/event", endSignal);
         messagingTemplate.convertAndSend("/sub/user/" + otherUserId + "/event", endSignal);
+
+        forceEndUser.decreaseTemperature(3);
+        userRepository.save(forceEndUser);
+
+// ✅ 히스토리 저장 추가
+        UserTemperatureHistory history = UserTemperatureHistory.builder()
+                .user(forceEndUser)
+                .temperature(forceEndUser.getTemperature())
+                .recordedAt(LocalDateTime.now())
+                .build();
+        userTemperatureHistoryRepository.save(history);
     }
 
     //종료/연장 시 SystemMessage 저장
@@ -485,5 +497,112 @@ public class UserChatService {
         }
 
         userActivityRepository.save(activity);
+    }
+
+    //MyPage 채팅 List 불러오기
+    public List<ChatHistoryResponse> getMyChatHistory(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 유저입니다."));
+
+        List<ChatRoom> endedRooms = chatRoomRepository.findEndedRoomsByUser(user);
+
+        return endedRooms.stream().map(room -> {
+            // 상대방이 나를 평가한 emotion 조회
+            EmotionType emotion = chatReviewRepository
+                    .findByChatRoomAndTarget(room, user)
+                    .stream()
+                    .findFirst()
+                    .map(ChatReview::getEmotion)
+                    .orElse(null);
+
+            // TALK 타입 메시지 수
+            long messageCount = chatMessageRepository.countNonSystemMessages(room);
+
+            return ChatHistoryResponse.of(room, emotion, messageCount);
+        }).collect(Collectors.toList());
+    }
+
+    //채팅기록 상세 불러오기
+    public ChatRoomDetailResponse getChatRoomDetail(Long roomId, Long userId) {
+        ChatRoom room = chatRoomRepository.findByIdWithMissionKeyword(roomId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 방입니다."));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 유저입니다."));
+
+        // 내 키워드 미션
+        String myMissionKeyword = null;
+        if (room.getUser1().getId().equals(userId) && room.getUser1Mission() != null) {
+            myMissionKeyword = room.getUser1Mission().getKeyword();
+        } else if (room.getUser2() != null && room.getUser2().getId().equals(userId) && room.getUser2Mission() != null) {
+            myMissionKeyword = room.getUser2Mission().getKeyword();
+        }
+
+        // 상대방이 나에게 준 평가
+        EmotionType opponentEmotion = chatReviewRepository
+                .findByChatRoomAndTarget(room, user)
+                .stream()
+                .findFirst()
+                .map(ChatReview::getEmotion)
+                .orElse(null);
+
+        // 상대방이 제출한 키워드 추측 (UserMission에서 상대방이 나의 미션에 대해 제출한 것)
+        String opponentGuessedKeyword = userMissionRepository
+                .findByChatRoomAndUser(room, user)
+                .map(UserMission::getGuessedKeyword)
+                .orElse(null);
+
+        // 총 대화 시간 계산
+        List<ChatMessage> messages = chatMessageRepository.findByChatRoomOrderByTimestampAsc(room);
+        long durationMinutes = 0;
+        if (messages.size() >= 2) {
+            LocalDateTime first = messages.get(0).getTimestamp();
+            LocalDateTime last = messages.get(messages.size() - 1).getTimestamp();
+            durationMinutes = java.time.Duration.between(first, last).toMinutes();
+        }
+
+        // 상대방이 나에게 쓴 피드백
+        Optional<ChatFeedback> feedback = chatFeedbackRepository
+                .findByChatRoomAndTarget(room, user);
+
+        SpecialTagType tag1 = feedback.map(ChatFeedback::getSpecialTagType1).orElse(null);
+        SpecialTagType tag2 = feedback.map(ChatFeedback::getSpecialTagType2).orElse(null);
+        String comment = feedback.map(ChatFeedback::getComment).orElse(null);
+
+
+        return new ChatRoomDetailResponse(
+                userId,
+                myMissionKeyword,
+                opponentGuessedKeyword,
+                opponentEmotion,
+                durationMinutes,
+                tag1,
+                tag2,
+                comment
+        );
+    }
+
+    public Map<String, Object> getMyPageStats(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 유저입니다."));
+
+        // 1. EmotionType 집계 (긍정/보통/부정)
+        List<EmotionType> emotions = chatReviewRepository.findEmotionsByTargetId(userId);
+        long positive = emotions.stream().filter(e -> e == EmotionType.GREAT || e == EmotionType.GOOD).count();
+        long normal   = emotions.stream().filter(e -> e == EmotionType.NORMAL).count();
+        long negative = emotions.stream().filter(e -> e == EmotionType.BAD   || e == EmotionType.TERRIBLE).count();
+
+        // 2. 최근 4개월 월별 현재 온도 (실제 온도 변동 이력이 없으므로 현재 온도를 기준으로 반환)
+        // 온도 이력 테이블이 없다면 현재 온도만 반환하고 프론트에서 처리
+        List<Map<String, Object>> monthlyStats =
+                userTemperatureHistoryRepository.findMonthlyAverageNative(userId, LocalDateTime.now().minusMonths(5));
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("temperature", user.getTemperature());
+        result.put("monthlyTemperatures", monthlyStats);
+        result.put("positiveCount", positive);
+        result.put("normalCount", normal);
+        result.put("negativeCount", negative);
+        result.put("totalEmotions", emotions.size());
+        return result;
     }
 }

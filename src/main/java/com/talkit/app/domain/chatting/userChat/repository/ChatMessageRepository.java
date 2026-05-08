@@ -14,7 +14,8 @@ import java.util.List;
 public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> {
     //채팅 40개 제한
     long countByChatRoom(ChatRoom chatRoom);
-
+    //TALK 타입 메세지 수 카운트
+    long countByChatRoomAndType(ChatRoom chatRoom, MessageType type);
     //읽지 않은 메세지 유무
     boolean existsByChatRoomAndIsReadFalseAndSenderNot(ChatRoom chatRoom, User sender);
     //연속 3개 초과 전송 제한
@@ -33,6 +34,7 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
     @Query("UPDATE ChatMessage m SET m.isRead = true WHERE m.chatRoom = :room AND m.sender != :sender AND m.isRead = false")
     void markAsReadByChatRoomAndSenderNot(@Param("room") ChatRoom room, @Param("sender") User sender);
 
+
     @Query("""
         SELECT COUNT(m) > 0
         FROM ChatMessage m
@@ -45,4 +47,7 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
             @Param("user") User user,
             @Param("length") int length
     );
+
+    @Query("SELECT COUNT(m) FROM ChatMessage m WHERE m.chatRoom = :room AND (m.type != 'SYSTEM' OR m.type IS NULL)")
+    long countNonSystemMessages(@Param("room") ChatRoom room);
 }

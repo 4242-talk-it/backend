@@ -1,5 +1,7 @@
 package com.talkit.app.domain.user.controller;
 
+import com.talkit.app.domain.chatting.userChat.controller.UserChatController;
+import com.talkit.app.domain.chatting.userChat.service.UserChatService;
 import com.talkit.app.domain.user.dto.UserRequestDto;
 import com.talkit.app.domain.user.dto.UserResponseDto;
 import com.talkit.app.domain.user.entity.User;
@@ -28,6 +30,7 @@ public class UserAuthController {
 
     private final UserService userService;
     private final TokenService tokenService;
+    private final UserChatService userChatService;
 
     @Operation(summary = "사이트 자체 회원가입")
     @PostMapping("/signup")
@@ -112,6 +115,13 @@ public class UserAuthController {
         String email = request.get("email");
         userService.restoreUser(email);
         return ResponseDto.of(null,"계정이 복구되었습니다. 다시 로그인해주세요.");
+    }
+
+    @GetMapping("/my-stats")
+    public ResponseEntity<Map<String, Object>> getMyStats(
+            @AuthenticationPrincipal UserDetailsImpl userDetails) {
+        Map<String, Object> stats = userChatService.getMyPageStats(userDetails.getId());
+        return ResponseEntity.ok(stats);
     }
 
 }

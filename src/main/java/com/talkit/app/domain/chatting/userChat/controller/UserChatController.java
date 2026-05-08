@@ -163,4 +163,17 @@ public class UserChatController {
         return ResponseEntity.ok("온도가 반영되었습니다.");
     }
 
+    @GetMapping("/my-history")
+    public ResponseEntity<List<ChatHistoryResponse>> getMyChatHistory(
+            @AuthenticationPrincipal UserDetailsImpl userDetails) {
+        return ResponseEntity.ok(userChatService.getMyChatHistory(userDetails.getId()));
+    }
+
+    @GetMapping("/room/{roomId}/detail")
+    public ResponseEntity<ChatRoomDetailResponse> getChatRoomDetail(
+            @PathVariable Long roomId,
+            @AuthenticationPrincipal UserDetailsImpl userDetails) {
+        return ResponseEntity.ok(userChatService.getChatRoomDetail(roomId, userDetails.getId()));
+    }
+
 }
