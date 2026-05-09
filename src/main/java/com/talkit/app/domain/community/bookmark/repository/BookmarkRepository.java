@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface BookmarkRepository extends JpaRepository<Bookmark, Long> {
+public interface BookMarkRepository extends JpaRepository<Bookmark, Long> {
 
     Optional<Bookmark> findByUserAndCommunity(User user, Community community);
 

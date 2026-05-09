@@ -24,10 +24,8 @@ public class ChatRoomResponse {
         String assignedMission = null;
 
         if (room.getUser1() != null && room.getUser1().getId().equals(userId)) {
-            // 내가 user1일 때
             assignedMission = (room.getUser1Mission() != null) ? room.getUser1Mission().getKeyword() : null;
         } else if (room.getUser2() != null && room.getUser2().getId().equals(userId)) {
-            // 내가 user2일 때
             assignedMission = (room.getUser2Mission() != null) ? room.getUser2Mission().getKeyword() : null;
         }
 

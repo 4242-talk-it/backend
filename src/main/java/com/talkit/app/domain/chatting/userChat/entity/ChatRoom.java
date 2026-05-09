@@ -52,7 +52,7 @@ public class ChatRoom {
     private boolean isMatched = false;
 
     @Builder.Default
-    private int maxTurns = 3; //최대 대화 가능수
+    private int maxTurns = 40; //최대 대화 가능수
     private boolean isExtended = false; //대화 연장 여부
 
     @Column(name="ended_At")
