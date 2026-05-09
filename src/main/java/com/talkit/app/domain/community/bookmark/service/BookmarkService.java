@@ -2,7 +2,7 @@ package com.talkit.app.domain.community.bookmark.service;
 
 import com.talkit.app.domain.community.base.repository.CommunityRepository;
 import com.talkit.app.domain.community.bookmark.dto.BookmarkResponseDto;
-import com.talkit.app.domain.community.bookmark.repository.BookmarkRepository;
+import com.talkit.app.domain.community.bookmark.repository.BookMarkRepository;
 import com.talkit.app.domain.community.entity.Bookmark;
 import com.talkit.app.domain.community.entity.Community;
 import com.talkit.app.domain.user.entity.User;
@@ -21,7 +21,7 @@ import static com.talkit.app.global.exception.ExceptionType.NOT_FOUND_USER;
 @Service
 public class BookmarkService {
 
-    private final BookmarkRepository bookmarkRepository;
+    private final BookMarkRepository bookmarkRepository;
     private final CommunityRepository communityRepository;
     private final UserRepository userRepository;
 

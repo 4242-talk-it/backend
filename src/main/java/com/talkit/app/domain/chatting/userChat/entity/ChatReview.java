@@ -22,16 +22,16 @@ public class ChatReview {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "writer_uid")
-    private User writer; // 평가를 한 사람
+    private User writer; // 본인
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "target_uid")
-    private User target; // 점수가 변동될 사람 (상대방)
+    private User target; // 온도가 변동될 상대
 
     @Enumerated(EnumType.STRING)
-    private EmotionType emotion; // 선택한 감정 (ENUM 사용 권장)
+    private EmotionType emotion; // 선택한 감정
 
-    private double temperatureDelta; // 해당 감정으로 인해 변동된 점수 (예: +5, -10)
+    private double temperatureDelta; // 해당 감정으로 인해 변동된 온도
 
     private LocalDateTime createdAt = LocalDateTime.now();
 }

@@ -35,7 +35,7 @@ public class Badge {
     private BadgeType badgeType;
 
     @Column(name="condition_key")
-    private String conditionKey; //조건대상 (예: "sports", "NIGHT", "POSITIVE", "LENGTH_20")
+    private String conditionKey; //조건대상
 
 
     @Builder

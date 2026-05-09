@@ -73,7 +73,7 @@ public class UserChatService {
             room.setUser1Mission(missionService.getRandomMissionEntity());
             room.setUser2Mission(missionService.getRandomMissionEntity());
 
-            // 매칭 완료 신호 전송 (기존 String 대신 JSON 객체로 보내면 프론트 처리가 더 쉬움)
+            // 매칭 완료 신호 전송
             Map<String, Object> matchSignal = new HashMap<>();
             matchSignal.put("type", "MATCH_COMPLETE");
             matchSignal.put("roomId", room.getRoomId());
@@ -105,9 +105,9 @@ public class UserChatService {
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 유저입니다."));
 
         return rooms.stream().map(room -> {
-            String lastMsg = room.getLastMessage(); // DB에 마지막 메시지를 저장하는 컬럼이 있다고 가정
+            String lastMsg = room.getLastMessage();
             if (lastMsg != null && lastMsg.length() > 20) {
-                lastMsg = lastMsg.substring(0, 20) + "..."; // 20자 이상이면 생략
+                lastMsg = lastMsg.substring(0, 20) + "...";
             }
             boolean hasUnread = chatMessageRepository
                     .existsByChatRoomAndIsReadFalseAndSenderNot(room, currentUser);
@@ -116,7 +116,7 @@ public class UserChatService {
                     room.getRoomId(),
                     room.getTopic(),
                     lastMsg != null ? lastMsg : "대화를 시작해보세요!",
-                    formatTime(room.getUpdatedAt()), // 시간 포맷팅 유틸 함수 사용
+                    formatTime(room.getUpdatedAt()),
                     userId,
                     hasUnread
             );
@@ -148,26 +148,21 @@ public class UserChatService {
         ChatRoom room = chatRoomRepository.findByIdWithMissionKeyword(roomId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 방입니다."));
 
-        // 1. 내가 누구인지 확인하고, '상대방'의 정답 정보를 가져옴
         User targetUser;
         MissionKeyword actualMission;
 
         if (room.getUser1().getId().equals(myId)) {
-            // 내가 user1이면, 검증 대상은 user2
             targetUser = room.getUser2();
             actualMission = room.getUser2Mission();
         } else {
-            // 내가 user2이면, 검증 대상은 user1
             targetUser = room.getUser1();
             actualMission = room.getUser1Mission();
         }
 
-        // 2. 정답 비교 (공백 제거 및 대소문자 무시하면 더 좋음)
         boolean isSuccess = actualMission.getKeyword().trim().equals(guessedKeyword.trim());
 
-        // 3. UserMission 결과 저장
         UserMission result = UserMission.builder()
-                .user(targetUser) // 미션을 부여받았던 당사자
+                .user(targetUser)
                 .chatRoom(room)
                 .missionKeyword(actualMission)
                 .guessedKeyword(guessedKeyword)
@@ -194,7 +189,6 @@ public class UserChatService {
             targetKeyword = room.getUser1Mission().getKeyword();
         }
 
-        // 2. 전체 키워드 중 '내 것'과 '상대방 것'을 제외한 오답 후보들 추출
         final String finalMyKeyword = myKeyword;
         final String finalTargetKeyword = targetKeyword;
 
@@ -203,11 +197,9 @@ public class UserChatService {
                 .filter(k -> !k.equals(finalMyKeyword) && !k.equals(finalTargetKeyword))
                 .collect(Collectors.toList());
 
-        // 3. 오답 후보 섞어서 3개 선택
         Collections.shuffle(distractors);
         List<String> options = new ArrayList<>(distractors.subList(0, Math.min(3, distractors.size())));
 
-        // 4. 실제 정답(상대방 키워드) 추가 후 최종 셔플
         options.add(finalTargetKeyword);
         Collections.shuffle(options);
 
@@ -223,13 +215,11 @@ public class UserChatService {
         long totalMessages = chatMessageRepository.countByChatRoom(room);
         if (room.isOvered() || totalMessages >= room.getMaxTurns()) {
             if (!room.isOvered()) {
-                room.setOvered(true); // 혹시 안 바뀌어있다면 여기서 변경
+                room.setOvered(true);
             }
             throw new IllegalStateException("최대 대화 횟수에 도달했습니다.");
         }
 
-        // 2. 연속 전송 제한 체크 (최근 3개 메시지 조회)
-        // Pageable을 사용하여 최신 3개만 가져오는 로직 필요
         List<ChatMessage> lastTalks = chatMessageRepository.findTop3ByChatRoomAndTypeOrderByTimestampDesc(room, MessageType.TALK);
 
         long continuousCount = lastTalks.stream()
@@ -247,7 +237,6 @@ public class UserChatService {
         User sender = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 유저입니다."));
 
-        // [추가] 보안 로직: 메시지 발신자가 해당 채팅방의 멤버(user1 혹은 user2)인지 확인
         if (!room.getUser1().getId().equals(userId) && !room.getUser2().getId().equals(userId)) {
             throw new IllegalArgumentException("해당 채팅방에 참여 권한이 없습니다.");
         }
@@ -306,20 +295,17 @@ public class UserChatService {
 
     //대화 연장 요청
     public void processExtendRequest(Long roomId, Long userId) {
-        // 1. 방 존재 여부 확인
         ChatRoom room = chatRoomRepository.findByIdWithMissionKeyword(roomId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 방입니다."));
 
-        // 2. 해당 유저가 이 방의 참여자인지 확인 ---> 굳이 이 로직이 필요한가 싶음
         if (!room.getUser1().getId().equals(userId) && !room.getUser2().getId().equals(userId)) {
             throw new IllegalArgumentException("해당 채팅방 참여자가 아닙니다.");
         }
 
-        if (room.getMaxTurns() > 3) {
+        if (room.getMaxTurns() > 40) {
             return;
         }
 
-        // 3. 동의 목록에 유저 추가
         Set<Long> agreedUsers = extendConsensus.computeIfAbsent(roomId, k -> new HashSet<>());
         agreedUsers.add(userId);
 
@@ -332,21 +318,17 @@ public class UserChatService {
         waitingSignal.put("roomId", roomId);
         messagingTemplate.convertAndSend("/sub/user/" + waitingReceiverId + "/event", waitingSignal);
 
-        // 4. 두 명 모두 동의했는지 확인
+        //두 명 모두 동의했는지 확인
         if (agreedUsers.size() >= 2) {
-            // 합의 완료: 메모리 비우기
             extendConsensus.remove(roomId);
 
-            // [중요] 연장을 위해 방 상태를 다시 활성화 (필요 시)
             room.setOvered(false);
             room.setMaxTurns(room.getMaxTurns() + 25);
             room.setExtended(true);
-            // chatRoomRepository.save(room);
 
             saveSystemMessage(room, "💬 대화가 종료되었습니다.");
             saveSystemMessage(room, "🎉 대화가 연장되었습니다! 계속 대화를 나눠보세요.");
 
-            // 5. 클라이언트에 연장 완료 신호 전송
             Map<String, Object> extendSignal = new HashMap<>();
             extendSignal.put("type", "EXTEND_COMPLETE");
             extendSignal.put("roomId", roomId);
@@ -360,8 +342,6 @@ public class UserChatService {
             messagingTemplate.convertAndSend("/sub/user/" + user1Id + "/event", extendSignal);
             messagingTemplate.convertAndSend("/sub/user/" + user2Id + "/event", extendSignal);
         }
-        // 한 명만 눌렀을 때는 아무 메시지도 보내지 않거나,
-        // 상대방 대기 모달을 유지하기 위해 서버에서 기록만 유지합니다.
     }
 
     //연장 요청을 한 명만 한 경우
@@ -372,10 +352,10 @@ public class UserChatService {
             room.endChat();
             saveSystemMessage(room, "상대방이 연장을 원하지 않아 대화가 종료되었습니다.");
 
-            // 종료 신호 구성
+            // 종료 신호
             Map<String, Object> rejectSignal = new HashMap<>();
             rejectSignal.put("type", "EXTEND_REJECTED");
-            rejectSignal.put("roomId", roomId); // 방 ID 명시
+            rejectSignal.put("roomId", roomId);
 
             // 두 사용자 모두에게 이벤트 채널로 전송
             messagingTemplate.convertAndSend("/sub/user/" + room.getUser1().getId() + "/event", rejectSignal);
@@ -422,7 +402,6 @@ public class UserChatService {
         forceEndUser.decreaseTemperature(3);
         userRepository.save(forceEndUser);
 
-// ✅ 히스토리 저장 추가
         UserTemperatureHistory history = UserTemperatureHistory.builder()
                 .user(forceEndUser)
                 .temperature(forceEndUser.getTemperature())
@@ -453,13 +432,11 @@ public class UserChatService {
     private void handleChatEndBadge(ChatRoom room) {
         User user1 = room.getUser1();
         User user2 = room.getUser2();
-        if (user2 == null) return; // 매칭 안 된 방은 스킵
+        if (user2 == null) return;
 
-        // UserActivity 카운트 업데이트
         updateChatActivity(room, user1);
         updateChatActivity(room, user2);
 
-        // MISSION_KEYWORD 체크
         if (room.getUser1Mission() != null) {
             badgeGrantService.checkMissionKeywordBadge(
                     user1, room.getUser1Mission().getCategory());
@@ -545,7 +522,7 @@ public class UserChatService {
                 .map(ChatReview::getEmotion)
                 .orElse(null);
 
-        // 상대방이 제출한 키워드 추측 (UserMission에서 상대방이 나의 미션에 대해 제출한 것)
+        // 상대방이 제출한 키워드 추측
         String opponentGuessedKeyword = userMissionRepository
                 .findByChatRoomAndUser(room, user)
                 .map(UserMission::getGuessedKeyword)
@@ -585,14 +562,12 @@ public class UserChatService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 유저입니다."));
 
-        // 1. EmotionType 집계 (긍정/보통/부정)
+        //EmotionType 집계 (긍정/보통/부정)
         List<EmotionType> emotions = chatReviewRepository.findEmotionsByTargetId(userId);
         long positive = emotions.stream().filter(e -> e == EmotionType.GREAT || e == EmotionType.GOOD).count();
         long normal   = emotions.stream().filter(e -> e == EmotionType.NORMAL).count();
         long negative = emotions.stream().filter(e -> e == EmotionType.BAD   || e == EmotionType.TERRIBLE).count();
 
-        // 2. 최근 4개월 월별 현재 온도 (실제 온도 변동 이력이 없으므로 현재 온도를 기준으로 반환)
-        // 온도 이력 테이블이 없다면 현재 온도만 반환하고 프론트에서 처리
         List<Map<String, Object>> monthlyStats =
                 userTemperatureHistoryRepository.findMonthlyAverageNative(userId, LocalDateTime.now().minusMonths(5));
 

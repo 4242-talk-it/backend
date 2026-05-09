@@ -79,7 +79,6 @@ public class UserChatController {
             @PathVariable Long roomId,
             @AuthenticationPrincipal UserDetailsImpl userDetails) {
 
-        // 서비스에서 정답+오답이 섞인 4개의 키워드 리스트를 가져옵니다.
         List<String> options = userChatService.getMissionOptions(roomId, userDetails.getId());
 
         return ResponseEntity.ok(options);
@@ -91,7 +90,6 @@ public class UserChatController {
             @AuthenticationPrincipal UserDetailsImpl userDetails) {
 
         ChatRoom room = userChatService.getRoom(roomId);
-        // 이전에 만든 DTO 변환 로직 사용 (userId를 넣어야 내 미션만 정확히 반환됨)
         return ResponseEntity.ok(ChatRoomResponse.from(room, userDetails.getId()));
     }
 
@@ -102,7 +100,6 @@ public class UserChatController {
                             @Header("userId") String userId) {
 
         try {
-            System.out.println("수신 데이터 - roomId: " + roomId + ", userId: " + userId + ", msg: " + request.getMessage());
             Long senderId = Long.parseLong(userId);
 
             ChatMessage message = userChatService.sendMessage(roomId, senderId, request.getMessage());
@@ -113,7 +110,7 @@ public class UserChatController {
         }
     }
 
-    //메세지 받기
+    //메세지 수신
     @GetMapping("/room/{roomId}/messages")
     public ResponseEntity<List<ChatMessageResponse>> getChatHistory(@PathVariable Long roomId) {
         List<ChatMessage> history = userChatService.getChatHistory(roomId);
@@ -130,12 +127,10 @@ public class UserChatController {
     public void extendChat(@DestinationVariable Long roomId,
                            @Header("userId") String userId) {
         try {
-            System.out.println("연장요청 수신 - roomId: " + roomId + ", userId: " + userId);
             Long senderId = Long.parseLong(userId);
 
             userChatService.processExtendRequest(roomId, senderId);
         } catch (Exception e) {
-            System.err.println("연장 요청 처리 중 오류 발생: "+e.getMessage());
             e.printStackTrace();
         }
     }

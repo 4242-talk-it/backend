@@ -33,12 +33,11 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
     @Query("SELECT DISTINCT r.topic FROM ChatRoom r WHERE r.user2 IS NULL AND r.isOvered = false")
     List<String> findAvailableTopics();
 
-    // 1. 매칭 대기 중인 방 찾기
+    //매칭 대기 중인 방 찾기
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<ChatRoom> findFirstByTopicAndUser1NotAndUser2IsNullAndIsOveredFalseOrderByCreatedAtAsc(String topic,User user1);
 
-    // 2. 내가 참여 중인 모든 채팅방 목록 조회
-    // user1 혹은 user2가 나인 경우를 모두 찾음
+    //내가 참여 중인 모든 채팅방 목록 조회
     @Query("SELECT r FROM ChatRoom r WHERE (r.user1.id = :userId OR r.user2.id = :userId) AND r.isOvered = false ORDER BY r.updatedAt DESC")
     List<ChatRoom> findMyActiveRooms(@Param("userId") Long userId);
 
