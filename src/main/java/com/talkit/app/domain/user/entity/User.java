@@ -111,4 +111,8 @@ public class User extends BaseEntity {
         if (this.temperature > 99.9) this.temperature = 99.9;
     }
 
+    public void decreaseTemperature(int amount) {
+        this.temperature = Math.max(0, this.temperature - amount);
+    }
+
 }

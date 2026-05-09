@@ -14,6 +14,7 @@ public class UserResponseDto {
     private String nickname;
     private String birthYear;
     private String gender;
+    private double temperature;
 
     public static UserResponseDto from(User user) {
         return UserResponseDto.builder()
@@ -22,6 +23,7 @@ public class UserResponseDto {
             .nickname(user.getNickname())
             .birthYear(user.getBirthYear())
             .gender(user.getGender())
+                .temperature(user.getTemperature())
             .build();
     }
 

@@ -24,6 +24,11 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
     @Query("SELECT r FROM ChatRoom r WHERE r.topic = :topic AND r.isOvered = false AND (r.user1 = :user OR r.user2 = :user)")
     Optional<ChatRoom> findFirstByTopicAndIsOveredFalseAndUser1OrUser2(@Param("topic") String topic, @Param("user") User user);
 
+    //내가 참여하고 종료된 방 조회
+    @Query("SELECT r FROM ChatRoom r WHERE (r.user1 = :user OR r.user2 = :user) AND r.isOvered = true AND r.isMatched=true ORDER BY r.endedAt DESC")
+    List<ChatRoom> findEndedRoomsByUser(@Param("user")User user);
+
+
     //userId2가 null인 채팅방의 topic불러오기
     @Query("SELECT DISTINCT r.topic FROM ChatRoom r WHERE r.user2 IS NULL AND r.isOvered = false")
     List<String> findAvailableTopics();
@@ -37,6 +42,6 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
     @Query("SELECT r FROM ChatRoom r WHERE (r.user1.id = :userId OR r.user2.id = :userId) AND r.isOvered = false ORDER BY r.updatedAt DESC")
     List<ChatRoom> findMyActiveRooms(@Param("userId") Long userId);
 
-    // 3. (선택) 특정 주제로 매칭 대기 중인 방이 있는지 확인
+    //특정 주제로 매칭 대기 중인 방이 있는지 확인
     boolean existsByTopicAndUser2IsNull(String topic);
 }
