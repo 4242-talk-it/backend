@@ -1,5 +1,18 @@
+#spring:
+#  datasource:
+#    url: jdbc:mysql://${LOCAL_HOST}:${MYSQL_EXTERNAL_PORT}/${MYSQL_DATABASE}?serverTimezone=Asia/Seoul&useUnicode=true&characterEncoding=UTF-8
+#    username: ${MYSQL_USER}
+#    password: ${MYSQL_PASSWORD}
+
+
 spring:
   datasource:
-    url: jdbc:mysql://${LOCAL_HOST}:${MYSQL_EXTERNAL_PORT}/${MYSQL_DATABASE}?serverTimezone=Asia/Seoul&useUnicode=true&characterEncoding=UTF-8
-    username: ${MYSQL_USER}
-    password: ${MYSQL_PASSWORD}
+    url: jdbc:mysql://localhost:3306/talkit?serverTimezone=Asia/Seoul&useUnicode=true&characterEncoding=UTF-8&allowPublicKeyRetrieval=true&useSSL=false
+    username: root
+    password: 1234
+
+#spring:
+#  datasource:
+#    url: jdbc:mysql://192.168.20.118:3307/talkitDB?serverTimezone=Asia/Seoul&useUnicode=true&characterEncoding=UTF-8
+#    username: ${MYSQL_USER}
+#    password: ${MYSQL_PASSWORD}
