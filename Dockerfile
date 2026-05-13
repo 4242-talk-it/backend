@@ -1,17 +1,21 @@
-# 베이스 이미지
-FROM eclipse-temurin:21-jdk
-
-# 작업 디렉토리
+# 1단계: 빌드 스테이지 (Gradle 빌드 수행)
+FROM eclipse-temurin:21-jdk AS build
 WORKDIR /app
 
-# JAR 파일 복사 (빌드 후)
-COPY build/libs/app-0.0.1-SNAPSHOT.jar /app/app.jar
+# 프로젝트 파일 전체 복사
+COPY . .
 
-# 포트 설정
+# Gradle 실행 권한 부여 및 JAR 파일 생성
+RUN chmod +x ./gradlew
+RUN ./gradlew clean build -x test
+
+# 2단계: 실행 스테이지 (가벼운 이미지 생성)
+FROM eclipse-temurin:21-jdk
+WORKDIR /app
+
+# 빌드 스테이지에서 생성된 jar만 복사 (경로 주의)
+COPY --from=build /app/build/libs/*-SNAPSHOT.jar app.jar
+
+# 환경 변수 및 실행 설정
 EXPOSE 8080
-
-# 앱 실행
-ENTRYPOINT ["java", "-jar", "app.jar"]
-# ENTRYPOINT ["java", "-Dspring.profiles.active=${SPRING_PROFILES_ACTIVE}", "-jar", "app.jar"]ENTRYPOINT ["sh", "-c", "java -Dspring.profiles.active=$SPRING_PROFILES_ACTIVE -jar app.jar"]
-# ENTRYPOINT ["sh", "-c", "java -Dspring.profiles.active=$SPRING_PROFILES_ACTIVE -jar app.jar"]
-
+ENTRYPOINT ["sh", "-c", "java -Dspring.profiles.active=${SPRING_PROFILES_ACTIVE:-prod} -jar app.jar"]
