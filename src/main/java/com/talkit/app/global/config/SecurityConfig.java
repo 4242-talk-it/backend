@@ -85,7 +85,7 @@ public class SecurityConfig {
                     "/api/user-chat/**",
                     "/api/chatting-badge/**",
                         "/api/chat-feedback/**",
-                        "api/users/my-stats"
+                        "/api/users/my-stats"
                 ).hasAuthority("ROLE_USER")
 
                 .anyRequest().authenticated()
@@ -98,7 +98,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
 
-        config.setAllowedOrigins(List.of("http://localhost:5173", "http://127.0.0.1:5173"));
+        config.setAllowedOrigins(List.of("http://localhost:5173", "http://127.0.0.1:5173", "https://your-vercel-app.vercel.app"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
