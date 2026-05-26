@@ -37,6 +37,7 @@ public class SecurityConfig {
         "/api/users/restore",
         "/api/auth/reissue",
         "/api/auth/status",
+            "/ws/**",
         "/swagger-ui/**",
         "/v3/api-docs/**",
         "/swagger-ui.html",
