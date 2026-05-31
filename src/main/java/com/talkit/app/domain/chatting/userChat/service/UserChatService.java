@@ -270,6 +270,7 @@ public class UserChatService {
             endSignal.put("type", "CHAT_END");
             endSignal.put("maxTurns", room.getMaxTurns());
             endSignal.put("roomId", roomId);
+            endSignal.put("forced",false);
 
             messagingTemplate.convertAndSend("/sub/room/" + roomId, endSignal);
             messagingTemplate.convertAndSend("/sub/user/" + userId + "/event", endSignal);
