@@ -213,10 +213,7 @@ public class UserChatService {
 
         //전체 메세지 수 체크 (40개 제한)
         long totalMessages = chatMessageRepository.countByChatRoom(room);
-        if (room.isOvered() || totalMessages >= room.getMaxTurns()) {
-            if (!room.isOvered()) {
-                room.setOvered(true);
-            }
+        if (room.isOvered()) {
             throw new IllegalStateException("최대 대화 횟수에 도달했습니다.");
         }
 
@@ -270,6 +267,7 @@ public class UserChatService {
             endSignal.put("type", "CHAT_END");
             endSignal.put("maxTurns", room.getMaxTurns());
             endSignal.put("roomId", roomId);
+            endSignal.put("forced",false);
 
             messagingTemplate.convertAndSend("/sub/room/" + roomId, endSignal);
             messagingTemplate.convertAndSend("/sub/user/" + userId + "/event", endSignal);
